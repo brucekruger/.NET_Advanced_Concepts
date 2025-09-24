@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36212.18
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp1", "ConsoleApp1\ConsoleApp1.csproj", "{402FC16D-765A-4BF4-9FFE-05BD65B286DB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CartService", "CartService\CartService.csproj", "{104E2DFB-DE7E-4B98-B0A1-533C276BAE5D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CatalogService.Tests", "CatalogService.Tests\CatalogService.Tests.csproj", "{C87F76A7-9DD8-4453-A7F1-13BA0B70BACE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +13,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{402FC16D-765A-4BF4-9FFE-05BD65B286DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{402FC16D-765A-4BF4-9FFE-05BD65B286DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{402FC16D-765A-4BF4-9FFE-05BD65B286DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{402FC16D-765A-4BF4-9FFE-05BD65B286DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{104E2DFB-DE7E-4B98-B0A1-533C276BAE5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{104E2DFB-DE7E-4B98-B0A1-533C276BAE5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{104E2DFB-DE7E-4B98-B0A1-533C276BAE5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{104E2DFB-DE7E-4B98-B0A1-533C276BAE5D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C87F76A7-9DD8-4453-A7F1-13BA0B70BACE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C87F76A7-9DD8-4453-A7F1-13BA0B70BACE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C87F76A7-9DD8-4453-A7F1-13BA0B70BACE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C87F76A7-9DD8-4453-A7F1-13BA0B70BACE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -29,7 +29,7 @@ internal class Program
 
             var key = Console.ReadKey(intercept: true).Key;
 
-            using var cartService = new Application.CartService(new CartRepository(connectionString));
+            using var cartService = new Infrastructure.CartService(new CartRepository(connectionString));
 
             try
             {

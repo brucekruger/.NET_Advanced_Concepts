@@ -53,3 +53,4 @@ CodeCoverage/
 TestResult.xml
 nunit-*.xml
 02.LayeredArchitectures/.vs/
+03.RESTfulWebAPI/.vs/

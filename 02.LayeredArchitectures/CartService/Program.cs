@@ -18,6 +18,11 @@ internal class Program
 
         var connectionString = Configuration.GetConnectionString("LiteDB");
 
+        if (!Directory.Exists(@"C:\Temp"))
+        {
+            Directory.CreateDirectory(@"C:\Temp");
+        }
+
         while (true)
         {
             Console.WriteLine();

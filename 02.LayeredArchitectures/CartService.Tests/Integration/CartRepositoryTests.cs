@@ -1,70 +1,177 @@
-﻿using AutoFixture;
+﻿using CartService.Application.Interfaces;
 using CartService.Domain;
-using CartService.Infrastructure;
+using CartService.Infrastructure.Data;
+using LiteDB;
 
 namespace CartService.Tests.Integration;
 
-public class CartRepositoryTests
+[Collection("Database")]
+public class CartRepositoryTests : IDisposable
 {
-    private const string TEST_CONNECTION_STRING = "Filename=:memory:";
-    private readonly Fixture _fixture;
+    private readonly ICartRepository _repository;
+    private readonly LiteDatabase _database;
 
     public CartRepositoryTests()
     {
-        _fixture = new Fixture();
+        // Use in-memory database for testing
+        var memoryStream = new MemoryStream();
+        _database = new LiteDatabase(memoryStream);
+        
+        CartConfiguration.ConfigureMapping();
+        CartConfiguration.EnsureIndexes(_database);
+        
+        // Pass special connection string for memory database
+        _repository = new CartRepository(_database);
     }
 
     [Fact]
-    public void GetItems_WhenHasCarts_ShouldReturnAllCarts()
+    public void GetCart_WhenCartExists_ShouldReturnCart()
     {
         // Arrange
-        using var repo = new CartRepository(TEST_CONNECTION_STRING);
-        var expectedCart1 = _fixture.Create<Cart>();
-        expectedCart1.Id = 1;
-        var expectedCart2 = _fixture.Create<Cart>();
-        expectedCart2.Id = 2;
+        var cart = new Cart { Id = Guid.NewGuid().ToString() };
+        _repository.CreateCart(cart);
 
         // Act
-        repo.AddItem(expectedCart1);
-        repo.AddItem(expectedCart2);
-        var actualCarts = repo.GetItems().ToArray();
+        var result = _repository.GetCart(cart.Id);
 
         // Assert
-        Assert.Equal(2, actualCarts.Length);
-        Assert.Contains(actualCarts, c => c.Id == expectedCart1.Id);
-        Assert.Contains(actualCarts, c => c.Id == expectedCart2.Id);
+        Assert.NotNull(result);
+        Assert.Equal(cart.Id, result.Id);
     }
 
     [Fact]
-    public void AddItem_WhenCorrectData_ShouldAddCartToDatabase()
+    public void CreateCart_ShouldCreateNewCart()
     {
         // Arrange
-        using var repo = new CartRepository(TEST_CONNECTION_STRING);
-        var expectedCart = _fixture.Create<Cart>();
+        var cart = new Cart { Id = Guid.NewGuid().ToString() };
 
         // Act
-        var actualId = repo.AddItem(expectedCart);
-        var actualCarts = repo.GetItems().ToArray();
+        var result = _repository.CreateCart(cart);
 
         // Assert
-        Assert.Single(actualCarts);
-        Assert.Equal(expectedCart.Id, actualId);
-        Assert.Equal(expectedCart.Id, actualCarts[0].Id);
+        Assert.NotNull(result);
+        var savedCart = _repository.GetCart(cart.Id);
+        Assert.NotNull(savedCart);
+        Assert.Equal(cart.Id, savedCart.Id);
     }
 
     [Fact]
-    public void DeleteItem_WhenAdded_ShouldRemoveCartFromDatabase()
+    public void AddItem_ShouldAddItemToCart()
     {
         // Arrange
-        using var repo = new CartRepository(TEST_CONNECTION_STRING);
-        var expectedCart = _fixture.Create<Cart>();
+        var cart = new Cart { Id = Guid.NewGuid().ToString() };
+        _repository.CreateCart(cart);
+
+        var item = new CartItem
+        {
+            Id = 1,
+            Name = "Test Item",
+            Price = 10.00m,
+            Quantity = 1,
+            CartId = cart.Id
+        };
 
         // Act
-        repo.AddItem(expectedCart);
-        var deletedResult = repo.DeleteItem(expectedCart.Id);
+        var result = _repository.AddItem(item);
 
         // Assert
-        Assert.True(deletedResult);
-        Assert.Empty(repo.GetItems());
+        Assert.NotNull(result);
+        var savedCart = _repository.GetCart(cart.Id);
+        Assert.Contains(savedCart.CartItems, i => i.Id == item.Id);
     }
+        
+    [Fact]
+    public void UpdateItem_ShouldUpdateExistingItem()
+    {
+        // Arrange
+        var cart = new Cart { Id = Guid.NewGuid().ToString() };
+        _repository.CreateCart(cart);
+
+        var item = new CartItem
+        {
+            Id = 1,
+            Name = "Test Item",
+            Price = 10.00m,
+            Quantity = 1,
+            CartId = cart.Id
+        };
+        _repository.AddItem(item);
+
+        // Act
+        item.Quantity = 2;
+        _repository.UpdateItem(item);
+
+        // Assert
+        var savedCart = _repository.GetCart(cart.Id);
+        var updatedItem = savedCart.CartItems.First(i => i.Id == item.Id);
+        Assert.Equal(2, updatedItem.Quantity);
+    }
+
+    [Fact]
+    public void RemoveItem_ShouldRemoveItemFromCart()
+    {
+        // Arrange
+        var cart = new Cart { Id = Guid.NewGuid().ToString() };
+        _repository.CreateCart(cart);
+
+        var item = new CartItem
+        {
+            Id = 1,
+            Name = "Test Item",
+            Price = 10.00m,
+            Quantity = 1,
+            CartId = cart.Id
+        };
+        _repository.AddItem(item);
+
+        // Act
+        _repository.RemoveItem(item.Id);
+
+        // Assert
+        var savedCart = _repository.GetCart(cart.Id);
+        Assert.DoesNotContain(savedCart.CartItems, i => i.Id == item.Id);
+    }
+
+    [Fact]
+    public void RemoveItems_ShouldRemoveAllItemsFromCart()
+    {
+        // Arrange
+        var cart = new Cart { Id = Guid.NewGuid().ToString() };
+        _repository.CreateCart(cart);
+
+        for (int i = 1; i <= 3; i++)
+        {
+            var item = new CartItem
+            {
+                Id = i,
+                Name = $"Test Item {i}",
+                Price = 10.00m * i,
+                Quantity = i,
+                CartId = cart.Id
+            };
+            _repository.AddItem(item);
+        }
+
+        // Act
+        _repository.RemoveItems(cart.Id);
+
+        // Assert
+        var savedCart = _repository.GetCart(cart.Id);
+        Assert.Empty(savedCart.CartItems);
+    }
+
+    public void Dispose()
+    {
+        _repository?.Dispose();
+        _database?.Dispose();
+    }
+}
+
+// Add this collection definition to prevent parallel execution of tests
+[CollectionDefinition("Database")]
+public class DatabaseCollection : ICollectionFixture<CartRepositoryTests>
+{
+    // This class has no code, and is never created. Its purpose is simply
+    // to be the place to apply [CollectionDefinition] and all the
+    // ICollectionFixture<> interfaces.
 }

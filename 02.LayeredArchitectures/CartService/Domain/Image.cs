@@ -2,6 +2,6 @@
 
 public class Image
 {
-    public Uri Url { get; set; }
-    public string AltText { get; set; }
+    public Uri Url { get; set; } = null!;
+    public string AltText { get; set; } = null!;
 }

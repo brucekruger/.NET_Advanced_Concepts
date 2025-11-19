@@ -10,12 +10,12 @@ public class ProductRepository : IRepository<Product>
 
     public ProductRepository(IApplicationDbContext applicationDbContext)
     {
-        _applicationDbContext = applicationDbContext;
+        _applicationDbContext = applicationDbContext ?? throw new ArgumentNullException(nameof(applicationDbContext));
     }
 
     public async Task<Product?> GetItemAsync(int id, CancellationToken cancellationToken)
     {
-        var product = await _applicationDbContext.Products.FindAsync(id, cancellationToken);
+        var product = await _applicationDbContext.Products.FindAsync([id], cancellationToken);
         return product;
     }
 
@@ -45,7 +45,7 @@ public class ProductRepository : IRepository<Product>
 
     public async Task<int> DeleteItemAsync(int itemId, CancellationToken cancellationToken)
     {
-        var product = await _applicationDbContext.Products.FindAsync(itemId, cancellationToken);
+        var product = await _applicationDbContext.Products.FindAsync([itemId], cancellationToken);
         if (product != null)
         {
             _applicationDbContext.Products.Remove(product);

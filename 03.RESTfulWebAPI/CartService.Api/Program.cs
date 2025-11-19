@@ -3,6 +3,7 @@ using CartService.Application.Interfaces;
 using CartService.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
 namespace CartService.Api;
 
@@ -14,6 +15,26 @@ public class Program
 
         // Add services to the container.
         builder.Services.AddControllers();
+
+        // Add CORS configuration
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAll", policy =>
+            {
+                policy.AllowAnyOrigin()
+                      .AllowAnyMethod()
+                      .AllowAnyHeader();
+            });
+
+            options.AddPolicy("AllowLocalhost", policy =>
+            {
+                policy.WithOrigins(
+                    "http://localhost:5064"   // CartService HTTP
+                )
+                .AllowAnyMethod()
+                .AllowAnyHeader();
+            });
+        });
 
         // Add API Versioning
         builder.Services.AddApiVersioning(options =>
@@ -32,10 +53,8 @@ public class Program
 
         // Configure Swagger/OpenAPI
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
-
         // Configure Swagger generation with API versions
-        builder.Services.ConfigureSwaggerGen(options =>
+        builder.Services.AddSwaggerGen(options =>
         {
             // Set the comments path for the Swagger JSON and UI
             var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -78,10 +97,20 @@ public class Program
             {
                 options.SwaggerEndpoint("/swagger/v1/swagger.json", "Cart Service API V1");
                 options.SwaggerEndpoint("/swagger/v2/swagger.json", "Cart Service API V2");
+                options.RoutePrefix = string.Empty;
             });
+            
+            // In development, don't force HTTPS redirection - allow both HTTP and HTTPS
         }
-
-        app.UseHttpsRedirection();
+        else
+        {
+            // In production, enforce HTTPS redirection
+            app.UseHttpsRedirection();
+        }
+        
+        // Use CORS middleware - must be before UseAuthorization
+        app.UseCors("AllowLocalhost");
+        
         app.UseAuthorization();
         app.MapControllers();
 

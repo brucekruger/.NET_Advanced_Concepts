@@ -14,12 +14,12 @@ public class CategoryRepository : IRepository<Category>
 
     public CategoryRepository(IApplicationDbContext applicationDbContext)
     {
-        _applicationDbContext = applicationDbContext;
+        _applicationDbContext = applicationDbContext ?? throw new ArgumentNullException(nameof(applicationDbContext));
     }
 
     public async Task<Category?> GetItemAsync(int id, CancellationToken cancellationToken)
     {
-        var category = await _applicationDbContext.Categories.FindAsync(id, cancellationToken);
+        var category = await _applicationDbContext.Categories.FindAsync([id], cancellationToken);
         return category;
     }
 
@@ -49,10 +49,30 @@ public class CategoryRepository : IRepository<Category>
 
     public async Task<int> DeleteItemAsync(int itemId, CancellationToken cancellationToken)
     {
-        var category = await _applicationDbContext.Categories.FindAsync(itemId, cancellationToken);
+        var category = await _applicationDbContext.Categories.FindAsync([itemId], cancellationToken);
         if (category != null)
         {
             _applicationDbContext.Categories.Remove(category);
+            return await _applicationDbContext.SaveChangesAsync(cancellationToken);
+        }
+        return 0;
+    }
+
+    public async Task<bool> HasProductsAsync(int categoryId, CancellationToken cancellationToken)
+    {
+        return await _applicationDbContext.Products
+            .AnyAsync(p => p.CategoryId == categoryId, cancellationToken);
+    }
+
+    public async Task<int> DeleteProductsByCategoryIdAsync(int categoryId, CancellationToken cancellationToken)
+    {
+        var products = await _applicationDbContext.Products
+            .Where(p => p.CategoryId == categoryId)
+            .ToArrayAsync(cancellationToken);
+
+        if (products.Any())
+        {
+            _applicationDbContext.Products.RemoveRange(products);
             return await _applicationDbContext.SaveChangesAsync(cancellationToken);
         }
         return 0;

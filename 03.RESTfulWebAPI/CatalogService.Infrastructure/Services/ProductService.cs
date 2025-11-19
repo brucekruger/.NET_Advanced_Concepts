@@ -9,7 +9,7 @@ public class ProductService : ICatalogService<Product>
 
     public ProductService(IRepository<Product> productRepository)
     {
-        _productRepository = productRepository;
+        _productRepository = productRepository ?? throw new ArgumentNullException(nameof(productRepository));
     }
 
     public Task<Product?> GetItemAsync(int id, CancellationToken cancellationToken)

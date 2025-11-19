@@ -12,6 +12,8 @@ namespace CartService.Api.Controllers.V2;
 [ApiController]
 [ApiVersion("2.0")]
 [Route("api/v{version:apiVersion}/cart")]
+[Produces(MediaTypeNames.Application.Json)]
+[Consumes(MediaTypeNames.Application.Json)]
 public class CartController : ControllerBase
 {
     private readonly ICartService _cartService;
@@ -111,11 +113,10 @@ public class CartController : ControllerBase
     /// </summary>
     /// <param name="cartId">The unique identifier of the cart.</param>
     /// <param name="cartItemId">The unique identifier of the cart item to remove.</param>
-    /// <returns>No content if successful; otherwise, a not found or bad request response.</returns>
+    /// <returns>No content if successful or not found; otherwise, a bad request response.</returns>
     [HttpDelete("{cartId}/{cartItemId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public ActionResult DeleteItem([FromRoute] string cartId, [FromRoute] int cartItemId)
     {
         try
@@ -123,7 +124,7 @@ public class CartController : ControllerBase
             var cart = _cartService.GetCart(cartId);
             if (cart == null)
             {
-                return NotFound(cartId);
+                return NoContent();
             }
 
             _cartService.RemoveItem(cartId, cartItemId);

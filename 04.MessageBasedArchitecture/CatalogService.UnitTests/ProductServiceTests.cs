@@ -1,6 +1,8 @@
 ﻿using AutoFixture;
 using CatalogService.Application.Interfaces;
 using CatalogService.Domain.Entities;
+using CatalogService.Infrastructure.Messaging;
+using CatalogService.Infrastructure.Messaging.Interfaces;
 using CatalogService.Infrastructure.Services;
 using Moq;
 
@@ -9,13 +11,16 @@ namespace CatalogService.UnitTests;
 public class ProductServiceTests
 {
     private readonly Mock<IRepository<Product>> _productRepositoryMock;
+    private readonly Mock<IMessagePublisher> _messagePublisherMock;
     private readonly ICatalogService<Product> _productService;
     private readonly Fixture _fixture;
 
     public ProductServiceTests()
     {
         _productRepositoryMock = new Mock<IRepository<Product>>();
-        _productService = new ProductService(_productRepositoryMock.Object);
+        _messagePublisherMock = new Mock<IMessagePublisher>();
+        var eventPublisher = new ProductEventPublisher(_messagePublisherMock.Object);
+        _productService = new ProductService(_productRepositoryMock.Object, eventPublisher);
 
         _fixture = new Fixture();
         _fixture.Behaviors.OfType<ThrowingRecursionBehavior>().ToList()

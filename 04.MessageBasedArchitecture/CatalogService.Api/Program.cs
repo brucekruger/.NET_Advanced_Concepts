@@ -8,8 +8,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
+using CatalogService.Infrastructure.Messaging;
+using CatalogService.Infrastructure.Messaging.Configuration;
+using CatalogService.Infrastructure.Messaging.Interfaces;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.EntityFrameworkCore;
+using RabbitMQ.Client;
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
 namespace CatalogService.Api;
@@ -66,7 +70,6 @@ public class Program
 
         // Configure Swagger/OpenAPI
         builder.Services.AddEndpointsApiExplorer();
-        // Configure Swagger generation with API versions
         builder.Services.AddSwaggerGen(options =>
         {
             // Set the comments path for the Swagger JSON and UI
@@ -116,6 +119,31 @@ public class Program
             throw new InvalidOperationException("Unable to create URL helper for HATEOAS link builder.");
         });
 
+        // Register the message publisher implementation (you need to identify your implementation)
+        builder.Services.AddScoped<IMessagePublisher, RabbitMqPublisher>();
+
+        // Register the product event publisher
+        builder.Services.AddScoped<ProductEventPublisher>();
+
+        // Configure RabbitMQ Settings
+        var rabbitMqSettings = builder.Configuration.GetSection("RabbitMq").Get<RabbitMqSettings>() ?? new RabbitMqSettings();
+        builder.Services.AddSingleton(rabbitMqSettings);
+
+        // Register RabbitMQ Connection
+        builder.Services.AddSingleton<IConnection>(sp =>
+        {
+            var connectionFactory = new ConnectionFactory
+            {
+                HostName = rabbitMqSettings.HostName,
+                UserName = rabbitMqSettings.UserName,
+                Password = rabbitMqSettings.Password,
+                VirtualHost = rabbitMqSettings.VirtualHost,
+                Port = rabbitMqSettings.Port
+            };
+            
+            return connectionFactory.CreateConnectionAsync().Result;
+        });
+        
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -127,18 +155,13 @@ public class Program
                 options.SwaggerEndpoint("/swagger/v1/swagger.json", "Catalog Service API V1");
                 options.RoutePrefix = string.Empty;
             });
-            
-            // In development, don't force HTTPS redirection - allow both HTTP and HTTPS
         }
         else
         {
-            // In production, enforce HTTPS redirection
             app.UseHttpsRedirection();
         }
         
-        // Use CORS middleware - must be before UseAuthorization
         app.UseCors("AllowLocalhost");
-        
         app.UseAuthorization();
         app.MapControllers();
 

@@ -1,8 +1,12 @@
 using System.Reflection;
 using CartService.Application.Interfaces;
 using CartService.Infrastructure.Data;
+using CartService.Infrastructure.Messaging;
+using CartService.Infrastructure.Messaging.Configuration;
+using CartService.Infrastructure.Messaging.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
+using RabbitMQ.Client;
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
 namespace CartService.Api;
@@ -38,22 +42,21 @@ public class Program
 
         // Add API Versioning
         builder.Services.AddApiVersioning(options =>
-          {
-              options.DefaultApiVersion = new ApiVersion(1, 0);
-              options.AssumeDefaultVersionWhenUnspecified = true;
-              options.ReportApiVersions = true;
-          });
+        {
+            options.DefaultApiVersion = new ApiVersion(1, 0);
+            options.AssumeDefaultVersionWhenUnspecified = true;
+            options.ReportApiVersions = true;
+        });
 
         builder.Services.AddVersionedApiExplorer(options =>
-          {
-              options.GroupNameFormat = "'v'VVV";
-              options.SubstituteApiVersionInUrl = true;
-              options.AssumeDefaultVersionWhenUnspecified = true;
-          });
+        {
+            options.GroupNameFormat = "'v'VVV";
+            options.SubstituteApiVersionInUrl = true;
+            options.AssumeDefaultVersionWhenUnspecified = true;
+        });
 
         // Configure Swagger/OpenAPI
         builder.Services.AddEndpointsApiExplorer();
-        // Configure Swagger generation with API versions
         builder.Services.AddSwaggerGen(options =>
         {
             // Set the comments path for the Swagger JSON and UI
@@ -87,6 +90,33 @@ public class Program
 
         builder.Services.AddScoped<ICartService, Infrastructure.Services.CartService>();
 
+        // Configure RabbitMQ
+        var rabbitMqSettings = builder.Configuration.GetSection("RabbitMq").Get<RabbitMqSettings>() ?? new RabbitMqSettings();
+        builder.Services.AddSingleton(rabbitMqSettings);
+
+        // Register RabbitMQ Connection
+        builder.Services.AddSingleton<IConnectionFactory>(sp => new ConnectionFactory
+        {
+            HostName = rabbitMqSettings.HostName,
+            UserName = rabbitMqSettings.UserName,
+            Password = rabbitMqSettings.Password,
+            VirtualHost = rabbitMqSettings.VirtualHost,
+            Port = rabbitMqSettings.Port,
+            AutomaticRecoveryEnabled = true
+        });
+
+        builder.Services.AddSingleton<IConnection>(sp =>
+        {
+            var factory = sp.GetRequiredService<IConnectionFactory>();
+            return factory.CreateConnectionAsync("CartService").Result;
+        });
+
+        // Register Message Consumer
+        builder.Services.AddSingleton<IMessageConsumer, RabbitMqConsumer>();
+
+        // Register Hosted Service for message consumer
+        builder.Services.AddHostedService<MessageConsumerHostedService>();
+
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -99,18 +129,13 @@ public class Program
                 options.SwaggerEndpoint("/swagger/v2/swagger.json", "Cart Service API V2");
                 options.RoutePrefix = string.Empty;
             });
-            
-            // In development, don't force HTTPS redirection - allow both HTTP and HTTPS
         }
         else
         {
-            // In production, enforce HTTPS redirection
             app.UseHttpsRedirection();
         }
         
-        // Use CORS middleware - must be before UseAuthorization
         app.UseCors("AllowLocalhost");
-        
         app.UseAuthorization();
         app.MapControllers();
 

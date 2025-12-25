@@ -1,15 +1,18 @@
 ﻿using CatalogService.Application.Interfaces;
 using CatalogService.Domain.Entities;
+using CatalogService.Infrastructure.Messaging;
 
 namespace CatalogService.Infrastructure.Services;
 
 public class ProductService : ICatalogService<Product>
 {
     private readonly IRepository<Product> _productRepository;
+    private readonly ProductEventPublisher _eventPublisher;
 
-    public ProductService(IRepository<Product> productRepository)
+    public ProductService(IRepository<Product> productRepository, ProductEventPublisher eventPublisher)
     {
         _productRepository = productRepository ?? throw new ArgumentNullException(nameof(productRepository));
+        _eventPublisher = eventPublisher ?? throw new ArgumentNullException(nameof(eventPublisher));
     }
 
     public Task<Product?> GetItemAsync(int id, CancellationToken cancellationToken)
@@ -33,7 +36,15 @@ public class ProductService : ICatalogService<Product>
             throw new InvalidOperationException($"Product with ID {product.Id} already exists.");
         }
 
-        return await _productRepository.AddItemAsync(product, cancellationToken);
+        var result = await _productRepository.AddItemAsync(product, cancellationToken);
+        
+        // Publish product created event
+        if (result > 0)
+        {
+            await _eventPublisher.PublishProductCreatedAsync(product, cancellationToken);
+        }
+
+        return result;
     }
 
     public async Task<int> UpdateItemAsync(Product product, CancellationToken cancellationToken)
@@ -47,7 +58,15 @@ public class ProductService : ICatalogService<Product>
             throw new InvalidOperationException($"Product with ID {product.Id} does not exist.");
         }
 
-        return await _productRepository.UpdateItemAsync(product, cancellationToken);
+        var result = await _productRepository.UpdateItemAsync(product, cancellationToken);
+
+        // Publish product updated event
+        if (result > 0)
+        {
+            await _eventPublisher.PublishProductUpdatedAsync(product, cancellationToken);
+        }
+
+        return result;
     }
 
     public async Task<int> DeleteItemAsync(int productId, CancellationToken cancellationToken)
@@ -59,6 +78,14 @@ public class ProductService : ICatalogService<Product>
             throw new InvalidOperationException($"Product with ID {productId} does not exist.");
         }
 
-        return await _productRepository.DeleteItemAsync(productId, cancellationToken);
+        var result = await _productRepository.DeleteItemAsync(productId, cancellationToken);
+
+        // Publish product deleted event
+        if (result > 0)
+        {
+            await _eventPublisher.PublishProductDeletedAsync(productId, cancellationToken);
+        }
+
+        return result;
     }
 }

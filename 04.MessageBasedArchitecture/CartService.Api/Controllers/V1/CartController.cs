@@ -93,6 +93,7 @@ public class CartController : ControllerBase
             var cartItem = new CartItem
             {
                 CartId = cartDto.CartId,
+                Id = cartItemDto.Id,
                 Name = cartItemDto.Name,
                 Image = cartItemImage,
                 Price = cartItemDto.Price,

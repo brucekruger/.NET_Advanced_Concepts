@@ -24,6 +24,11 @@ public class CartRepository : ICartRepository
     private ILiteCollection<Cart> Carts => _database.GetCollection<Cart>("carts");
     private ILiteCollection<CartItem> CartItems => _database.GetCollection<CartItem>("cartItems");
 
+    public IEnumerable<Cart> GetAllCarts()
+    {
+        return Carts.Include(c => c.CartItems).FindAll().ToArray();
+    }
+
     public Cart? GetCart(string cartId)
     {
         var cart = Carts.FindById(cartId);
@@ -42,6 +47,20 @@ public class CartRepository : ICartRepository
 
     public CartItem AddItem(CartItem item)
     {
+        if (item.Id > 0 && CartItems.FindById(item.Id) == null)
+        {
+            var newItem = new CartItem
+            {
+                Id = item.Id,
+                CartId = item.CartId,
+                Name = item.Name,
+                Price = item.Price,
+                Quantity = item.Quantity
+            };
+            CartItems.Insert(item.Id, newItem);
+            return newItem;
+        }
+
         CartItems.Insert(item);
         return item;
     }

@@ -149,6 +149,12 @@ internal class Program
             return;
         }
 
+        Console.Write("Enter item id: ");
+        if (!int.TryParse(Console.ReadLine(), out var itemId) || itemId <= 0)
+        {
+            itemId = Random.Shared.Next(1, 10000); // Simple ID generation for demo
+        }
+
         Console.Write("Enter item name: ");
         var name = Console.ReadLine();
         if (string.IsNullOrWhiteSpace(name))
@@ -173,7 +179,7 @@ internal class Program
 
         var item = new CartItem
         {
-            Id = Random.Shared.Next(1, 10000), // Simple ID generation for demo
+            Id = itemId,
             Name = name,
             Price = price,
             Quantity = quantity

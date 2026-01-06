@@ -12,6 +12,11 @@ public class CartService : ICartService
         _cartRepository = cartRepository;
     }
 
+    public IEnumerable<Cart> GetAllCarts()
+    {
+        return _cartRepository.GetAllCarts();
+    }
+
     public Cart? GetCart(string cartId)
     {
         if (string.IsNullOrWhiteSpace(cartId))
@@ -28,6 +33,11 @@ public class CartService : ICartService
         var cart = new Cart { Id = Guid.NewGuid().ToString() };
         var createdCart = _cartRepository.CreateCart(cart);
         return createdCart;
+    }
+
+    public void UpdateCart(Cart cart)
+    {
+        _cartRepository.UpdateCart(cart);
     }
 
     public CartItem AddItem(string cartId, CartItem item)
@@ -89,6 +99,11 @@ public class CartService : ICartService
 
         _cartRepository.UpdateCart(cart);
         return quantity <= 0 ? null : item;
+    }
+
+    public void UpdateItem(CartItem item)
+    {
+        _cartRepository.UpdateItem(item);
     }
 
     public bool RemoveItem(string cartId, int itemId)

@@ -8,6 +8,12 @@ namespace CartService.Application.Interfaces;
 public interface ICartRepository : IDisposable
 {
     /// <summary>
+    /// Gets all carts
+    /// </summary>
+    /// <returns>A list of all carts</returns>
+    IEnumerable<Cart> GetAllCarts();
+
+    /// <summary>
     /// Gets a cart by its ID
     /// </summary>
     /// <param name="cartId">The unique identifier of the cart</param>

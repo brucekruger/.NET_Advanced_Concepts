@@ -83,7 +83,7 @@ public class RabbitMqConsumer : IMessageConsumer, IDisposable
                 return;
             }
 
-            await ProcessProductChangeAsync(productChangedEvent);
+            ProcessProductChange(productChangedEvent);
             await _channel.BasicAckAsync(ea.DeliveryTag, false);
 
             _logger.LogInformation(
@@ -101,30 +101,46 @@ public class RabbitMqConsumer : IMessageConsumer, IDisposable
     /// <summary>
     /// Processes a product change event by updating cart items.
     /// </summary>
-    private Task ProcessProductChangeAsync(ProductChangedEvent productEvent)
+    private void ProcessProductChange(ProductChangedEvent productEvent)
     {
-        // This is a placeholder implementation.
-        // In a real scenario, you would:
-        // 1. Retrieve all carts from the repository
-        // 2. Find items matching the product ID
-        // 3. Update the product information based on the change type
-        // 4. Save the updated carts
-
         _logger.LogInformation(
             "Processing product change event - Product ID: {ProductId}, Change Type: {ChangeType}",
             productEvent.ProductId,
             productEvent.ChangeType);
 
-        using (var scope = _serviceProvider.CreateScope())
+        using var scope = _serviceProvider.CreateScope();
+        var cartService = scope.ServiceProvider.GetRequiredService<ICartService>();
+
+        var carts = cartService.GetAllCarts();
+
+        foreach (var cart in carts)
         {
-            var cartService = scope.ServiceProvider.GetRequiredService<ICartService>();
+            var itemsToUpdate = cart.CartItems
+                .Where(item => item.Id == productEvent.ProductId)
+                .ToArray();
 
-            // TODO: Implement actual cart update logic based on product changes
-
-            // Use cartService to handle the message
+            foreach (var item in itemsToUpdate)
+            {
+                switch (productEvent.ChangeType)
+                {
+                    case ProductChangeType.Updated:
+                        item.Name = productEvent.Name;
+                        item.Price = productEvent.Price;
+                        // Update other fields as necessary
+                        cartService.UpdateItem(item);
+                        break;
+                    case ProductChangeType.Deleted:
+                        cart.CartItems.Remove(item);
+                        cartService.RemoveItem(item.CartId, item.Id);
+                        break;
+                    case ProductChangeType.Created:
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+            cartService.UpdateCart(cart);
         }
-
-        return Task.CompletedTask;
     }
 
     /// <summary>

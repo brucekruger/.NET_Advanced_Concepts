@@ -55,3 +55,4 @@ nunit-*.xml
 02.LayeredArchitectures/.vs/
 03.RESTfulWebAPI/.vs/
 04.MessageBasedArchitecture/.vs/
+05.Security/.vs/

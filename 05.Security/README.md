@@ -1,6 +1,6 @@
 # Message-Based Architecture - RabbitMQ Setup
 
-This project uses **RabbitMQ** as the message broker for asynchronous communication between microservices (CartService and CatalogService).
+This project uses **RabbitMQ** as the message broker for asynchronous communication between microservices (CartService and CatalogService). It also includes **PostgreSQL** as the database for **Keycloak** identity server.
 
 ## Prerequisites
 
@@ -8,9 +8,9 @@ This project uses **RabbitMQ** as the message broker for asynchronous communicat
 - **Docker Compose** (usually included with Docker Desktop)
 - **.NET 9 SDK** (for running the applications)
 
-## Running RabbitMQ with Docker Compose
+## Running Services with Docker Compose
 
-### 1. Start RabbitMQ Container
+### 1. Start Services
 
 Navigate to the project root directory and run:
 
@@ -19,25 +19,20 @@ docker-compose up -d
 ```
 
 This command:
-- Starts the RabbitMQ container in the background (`-d` flag)
+- Starts all containers (RabbitMQ, PostgreSQL, Keycloak) in the background (`-d` flag)
 - Creates named volumes for data persistence
 - Sets up the microservices network
-- Initializes the container with health checks
+- Initializes the containers with health checks
 
-### 2. Verify RabbitMQ is Running
+### 2. Verify Services are Running
 
-Check if the container is running:
+Check if the containers are running:
 
 ```bash
 docker-compose ps
 ```
 
-You should see output similar to:
-
-```
-NAME                    STATUS
-rabbitmq-container      Up (healthy)
-```
+You should see output indicating all containers are "Up" and "healthy".
 
 ### 3. Access RabbitMQ Management UI
 
@@ -49,7 +44,17 @@ Open your browser and navigate to:
 - Username: `guest`
 - Password: `guest`
 
-### 4. Verify Message Broker Connection
+### 4. Access Keycloak Admin Console
+
+Open your browser and navigate to:
+
+**URL:** `http://localhost:8080/admin` (use Incognito mode in browser!)
+
+**Credentials:**
+- Username: `admin`
+- Password: `admin123`
+
+### 5. Verify Message Broker Connection
 
 The applications are pre-configured to connect to RabbitMQ. When you run CartService.Api or CatalogService.Api:
 
@@ -64,10 +69,12 @@ The applications are pre-configured to connect to RabbitMQ. When you run CartSer
 |-----------|------|---------|
 | RabbitMQ AMQP | `5672` | Message broker communication |
 | RabbitMQ Management UI | `15672` | Web-based queue and exchange management |
+| Keycloak | `8080` | Identity and Access Management |
+| PostgreSQL | `5432` | Relational Database Service |
 
 ## Common Docker Compose Commands
 
-### Stop RabbitMQ
+### Stop Services
 ```bash
 docker-compose down
 ```
@@ -82,7 +89,7 @@ docker-compose down -v
 docker-compose logs -f rabbitmq
 ```
 
-### Restart RabbitMQ
+### Restart Services
 ```bash
 docker-compose restart
 ```
@@ -113,6 +120,18 @@ docker-compose down -v
 docker-compose up -d
 ```
 
+### Keycloak Container Won't Start
+
+**Check logs:**
+```bash
+docker-compose logs keycloak
+```
+
+**Ensure PostgreSQL is running first:**
+```bash
+docker-compose ps postgres
+```
+
 ### Port Already in Use
 
 If port `5672` or `15672` is already in use, modify the `docker-compose.yml`:
@@ -123,7 +142,14 @@ ports:
   - "15673:15672"   # Use 15673 instead of 15672
 ```
 
-Then update your `appsettings.json` RabbitMQ settings accordingly.
+If port `8080` is already in use:
+
+```yaml
+ports:
+  - "8081:8080"     # Use 8081 instead of 8080
+```
+
+Then update your `appsettings.json` settings accordingly.
 
 ### Can't Connect from Application
 
@@ -193,17 +219,22 @@ RabbitMQ container includes health checks that:
 RabbitMQ data is persisted in Docker volumes:
 - `rabbitmq_data`: Message queue data
 - `rabbitmq_logs`: Service logs
+- `postgres_data`: PostgreSQL data
+- `keycloak_data`: Keycloak data
 
 Data survives container restarts unless you use `docker-compose down -v`.
 
 ## Next Steps
 
-1. Start RabbitMQ: `docker-compose up -d`
-2. Verify it's running: `docker-compose ps`
-3. Access Management UI: `http://localhost:15672`
-4. Run CartService.Api and CatalogService.Api
-5. Monitor messages in the Management UI
+1. Start services: `docker-compose up -d`
+2. Verify all services are running: `docker-compose ps`
+3. Access RabbitMQ Management UI: `http://localhost:15672`
+4. Access Keycloak Admin Console: `http://localhost:8080/admin`
+5. Run CartService.Api and CatalogService.Api
+6. Monitor messages in the Management UI
 
 ---
 
 For more information on RabbitMQ, visit: https://www.rabbitmq.com/
+
+For more information on Keycloak, visit: https://www.keycloak.org/

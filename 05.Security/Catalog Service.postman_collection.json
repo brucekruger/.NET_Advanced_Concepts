@@ -1,0 +1,529 @@
+{
+  "info": {
+    "_postman_id": "5e996454-b016-4c0a-aed2-8685c8ca9186",
+    "name": "Catalog Service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "6833579"
+  },
+  "item": [
+    {
+      "name": "Get Token CartService API",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const response = pm.response.json();\r",
+              "\r",
+              "pm.environment.set(\"access_token_cart_service\", response.access_token);\r",
+              "pm.environment.set(\"refresh_token_cart_service\", response.refresh_token);\r",
+              "\r",
+              "console.log(\"Access Token saved: \" + response.access_token.substring(0, 50) + \"...\");\r",
+              "console.log(\"Refresh Token saved: \" + response.refresh_token.substring(0, 50) + \"...\");\r",
+              "console.log(\"Token expires in: \" + response.expires_in + \" seconds\");"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "grant_type",
+              "value": "password",
+              "type": "text",
+              "uuid": "02abaea2-32d0-4814-bd24-f849f2638774"
+            },
+            {
+              "key": "client_id",
+              "value": "{{client_id_cart_service}}",
+              "type": "text",
+              "uuid": "a28b013e-0c82-4c2a-87d1-d0de21a8d39c"
+            },
+            {
+              "key": "client_secret",
+              "value": "{{client_secret_cart_service}}",
+              "type": "text",
+              "uuid": "ee97ac71-8a37-4410-873a-543a432bc694"
+            },
+            {
+              "key": "username",
+              "value": "{{username_cart_service}}",
+              "type": "text",
+              "uuid": "6626d15c-c74a-4ba1-8602-68ea5de09452"
+            },
+            {
+              "key": "password",
+              "value": "{{password_cart_service}}",
+              "type": "text",
+              "uuid": "1c5f4712-a369-4e7d-8bb8-258b7b4a9c87"
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8080/realms/microservices-realm/protocol/openid-connect/token",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "realms",
+            "microservices-realm",
+            "protocol",
+            "openid-connect",
+            "token"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Refresh Token CartService API",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const response = pm.response.json();\r",
+              "\r",
+              "pm.environment.set(\"access_token_cart_service\", response.access_token);\r",
+              "pm.environment.set(\"refresh_token_cart_service\", response.refresh_token);\r",
+              "\r",
+              "console.log(\"Access Token saved: \" + response.access_token.substring(0, 50) + \"...\");\r",
+              "console.log(\"Refresh Token saved: \" + response.refresh_token.substring(0, 50) + \"...\");\r",
+              "console.log(\"Token expires in: \" + response.expires_in + \" seconds\");"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "grant_type",
+              "value": "refresh_token",
+              "type": "text",
+              "uuid": "02abaea2-32d0-4814-bd24-f849f2638774"
+            },
+            {
+              "key": "client_id",
+              "value": "{{client_id_cart_service}}",
+              "type": "text",
+              "uuid": "a28b013e-0c82-4c2a-87d1-d0de21a8d39c"
+            },
+            {
+              "key": "client_secret",
+              "value": "{{client_secret_cart_service}}",
+              "type": "text",
+              "uuid": "ee97ac71-8a37-4410-873a-543a432bc694"
+            },
+            {
+              "key": "refresh_token",
+              "value": "{{refresh_token_cart_service}}",
+              "type": "text",
+              "uuid": "6626d15c-c74a-4ba1-8602-68ea5de09452"
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8080/realms/microservices-realm/protocol/openid-connect/token",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "realms",
+            "microservices-realm",
+            "protocol",
+            "openid-connect",
+            "token"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Cart",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token_cart_service}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://localhost:7021/api/v1/cart/96e1f97b-0c34-41b2-be9b-d356546363d8",
+          "protocol": "https",
+          "host": [
+            "localhost"
+          ],
+          "port": "7021",
+          "path": [
+            "api",
+            "v1",
+            "cart",
+            "96e1f97b-0c34-41b2-be9b-d356546363d8"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Item from Cart",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token_cart_service}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "https://localhost:7021/api/v1/cart/96e1f97b-0c34-41b2-be9b-d356546363d8/cart-items/123456",
+          "protocol": "https",
+          "host": [
+            "localhost"
+          ],
+          "port": "7021",
+          "path": [
+            "api",
+            "v1",
+            "cart",
+            "96e1f97b-0c34-41b2-be9b-d356546363d8",
+            "cart-items",
+            "123456"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Add Item to Cart",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token_cart_service}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "https://localhost:7021/api/v1/cart",
+          "protocol": "https",
+          "host": [
+            "localhost"
+          ],
+          "port": "7021",
+          "path": [
+            "api",
+            "v1",
+            "cart"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Token CatalogService API",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const response = pm.response.json();\r",
+              "\r",
+              "pm.environment.set(\"access_token_catalog_service\", response.access_token);\r",
+              "pm.environment.set(\"refresh_token_catalog_service\", response.refresh_token);\r",
+              "\r",
+              "console.log(\"Access Token saved: \" + response.access_token.substring(0, 50) + \"...\");\r",
+              "console.log(\"Refresh Token saved: \" + response.refresh_token.substring(0, 50) + \"...\");\r",
+              "console.log(\"Token expires in: \" + response.expires_in + \" seconds\");"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "grant_type",
+              "value": "password",
+              "type": "text",
+              "uuid": "02abaea2-32d0-4814-bd24-f849f2638774"
+            },
+            {
+              "key": "client_id",
+              "value": "{{client_id_catalog_service}}",
+              "type": "text",
+              "uuid": "a28b013e-0c82-4c2a-87d1-d0de21a8d39c"
+            },
+            {
+              "key": "client_secret",
+              "value": "{{client_secret_catalog_service}}",
+              "type": "text",
+              "uuid": "ee97ac71-8a37-4410-873a-543a432bc694"
+            },
+            {
+              "key": "username",
+              "value": "{{username_catalog_service}}",
+              "type": "text",
+              "uuid": "6626d15c-c74a-4ba1-8602-68ea5de09452"
+            },
+            {
+              "key": "password",
+              "value": "{{password_catalog_service}}",
+              "type": "text",
+              "uuid": "1c5f4712-a369-4e7d-8bb8-258b7b4a9c87"
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8080/realms/microservices-realm/protocol/openid-connect/token",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "realms",
+            "microservices-realm",
+            "protocol",
+            "openid-connect",
+            "token"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Refresh CatalogService API",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const response = pm.response.json();\r",
+              "\r",
+              "pm.environment.set(\"access_token_catalog_service\", response.access_token);\r",
+              "pm.environment.set(\"refresh_token_catalog_service\", response.refresh_token);\r",
+              "\r",
+              "console.log(\"Access Token saved: \" + response.access_token.substring(0, 50) + \"...\");\r",
+              "console.log(\"Refresh Token saved: \" + response.refresh_token.substring(0, 50) + \"...\");\r",
+              "console.log(\"Token expires in: \" + response.expires_in + \" seconds\");"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "grant_type",
+              "value": "refresh_token",
+              "type": "text",
+              "uuid": "02abaea2-32d0-4814-bd24-f849f2638774"
+            },
+            {
+              "key": "client_id",
+              "value": "{{client_id_catalog_service}}",
+              "type": "text",
+              "uuid": "a28b013e-0c82-4c2a-87d1-d0de21a8d39c"
+            },
+            {
+              "key": "client_secret",
+              "value": "{{client_secret_catalog_service}}",
+              "type": "text",
+              "uuid": "ee97ac71-8a37-4410-873a-543a432bc694"
+            },
+            {
+              "key": "refresh_token",
+              "value": "{{refresh_token_catalog_service}}",
+              "type": "text",
+              "uuid": "6626d15c-c74a-4ba1-8602-68ea5de09452"
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8080/realms/microservices-realm/protocol/openid-connect/token",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "realms",
+            "microservices-realm",
+            "protocol",
+            "openid-connect",
+            "token"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Categories",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token_catalog_service}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://localhost:7001/api/categories",
+          "protocol": "https",
+          "host": [
+            "localhost"
+          ],
+          "port": "7001",
+          "path": [
+            "api",
+            "categories"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Category",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token_catalog_service}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "https://localhost:7001/api/categories/123456",
+          "protocol": "https",
+          "host": [
+            "localhost"
+          ],
+          "port": "7001",
+          "path": [
+            "api",
+            "categories",
+            "123456"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Products",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token_catalog_service}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://localhost:7001/api/products",
+          "protocol": "https",
+          "host": [
+            "localhost"
+          ],
+          "port": "7001",
+          "path": [
+            "api",
+            "products"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Product",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token_catalog_service}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "https://localhost:7001/api/products/123456",
+          "protocol": "https",
+          "host": [
+            "localhost"
+          ],
+          "port": "7001",
+          "path": [
+            "api",
+            "products",
+            "123456"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

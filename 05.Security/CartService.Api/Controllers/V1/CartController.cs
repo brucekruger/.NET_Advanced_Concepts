@@ -1,8 +1,9 @@
-﻿using System.Net.Mime;
-using CartService.Api.Models;
+﻿using CartService.Api.Models;
 using CartService.Application.Interfaces;
 using CartService.Domain;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Mime;
 
 namespace CartService.Api.Controllers.V1;
 
@@ -12,6 +13,7 @@ namespace CartService.Api.Controllers.V1;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/cart")]
+[Authorize]  // All endpoints require both roles
 [Produces(MediaTypeNames.Application.Json)]
 [Consumes(MediaTypeNames.Application.Json)]
 public class CartController : ControllerBase

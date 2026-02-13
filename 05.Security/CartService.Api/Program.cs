@@ -1,12 +1,20 @@
-using System.Reflection;
+using CartService.Api.Middleware;
+using CartService.Api.Services;
 using CartService.Application.Interfaces;
 using CartService.Infrastructure.Data;
 using CartService.Infrastructure.Messaging;
 using CartService.Infrastructure.Messaging.Configuration;
 using CartService.Infrastructure.Messaging.Interfaces;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RabbitMQ.Client;
+using System.IdentityModel.Tokens.Jwt;
+using System.Reflection;
+using CartService.Api.Extensions;
+
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
 namespace CartService.Api;
@@ -16,6 +24,32 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+
+        // Add Authentication (same as CatalogService)
+        JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
+
+        var authSettings = builder.Configuration.GetSection("Authentication");
+
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.Authority = authSettings["Authority"];
+                options.Audience = authSettings["Audience"];
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = false,  // Disabled for development
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = authSettings["Authority"]
+                };
+            });
+
+        builder.Services.AddAuthorization();
+
+        // Add Keycloak claims transformation to map realm_access.roles to standard role claims
+        builder.Services.AddScoped<IClaimsTransformation, CartService.Api.Services.KeycloakClaimsTransformation>();
 
         // Add services to the container.
         builder.Services.AddControllers();
@@ -77,6 +111,32 @@ public class Program
                 Version = "v2",
                 Description = "An enhanced API for managing shopping carts - V2"
             });
+
+            // Add JWT Bearer Security Definition
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                In = ParameterLocation.Header,
+                Description = "Please enter a valid JWT token",
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                BearerFormat = "JWT",
+                Scheme = "Bearer"
+            });
+
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    []
+                }
+            });
         });
 
         builder.Services.AddScoped<ICartRepository, CartRepository>(sp =>
@@ -136,7 +196,12 @@ public class Program
         }
         
         app.UseCors("AllowLocalhost");
+
+        // Add custom middleware BEFORE authentication
+        app.UseTokenLogging();
+        app.UseAuthentication();
         app.UseAuthorization();
+
         app.MapControllers();
 
         app.Run();

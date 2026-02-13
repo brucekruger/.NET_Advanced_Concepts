@@ -1,10 +1,11 @@
-﻿using CatalogService.Api.Models;
+﻿using CatalogService.Api.Interfaces;
+using CatalogService.Api.Models;
 using CatalogService.Application.Interfaces;
 using CatalogService.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Mime;
-using CatalogService.Api.Interfaces;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -15,6 +16,7 @@ namespace CatalogService.Api.Controllers;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/categories")]
+[Authorize]  // Require authentication for all endpoints
 [Produces(MediaTypeNames.Application.Json)]
 [Consumes(MediaTypeNames.Application.Json)]
 public class CategoryController : ControllerBase
@@ -108,6 +110,7 @@ public class CategoryController : ControllerBase
     /// <param name="cancellationToken"></param>
     /// <returns>The created category item if successful; otherwise, a bad request or error response.</returns>
     [HttpPost]
+    [Authorize(Roles = "Manager")]
     [Consumes(MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -154,6 +157,7 @@ public class CategoryController : ControllerBase
     /// <param name="cancellationToken"></param>
     /// <returns>The updated category item if successful; otherwise, a bad request or error response.</returns>
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Manager")]
     [Consumes(MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -193,6 +197,7 @@ public class CategoryController : ControllerBase
     /// <param name="cancellationToken"></param>
     /// <returns>No content if successful or not found; otherwise, a bad request response.</returns>
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Manager")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> Delete([FromRoute] int id, [FromQuery] bool cascadeDelete = false, CancellationToken cancellationToken = default)

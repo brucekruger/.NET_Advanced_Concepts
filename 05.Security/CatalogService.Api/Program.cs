@@ -3,17 +3,21 @@ using CatalogService.Api.Services;
 using CatalogService.Application.Interfaces;
 using CatalogService.Domain.Entities;
 using CatalogService.Infrastructure.Data;
-using CatalogService.Infrastructure.Services;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Routing;
-using Microsoft.OpenApi.Models;
-using System.Reflection;
 using CatalogService.Infrastructure.Messaging;
 using CatalogService.Infrastructure.Messaging.Configuration;
 using CatalogService.Infrastructure.Messaging.Interfaces;
+using CatalogService.Infrastructure.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using RabbitMQ.Client;
+using System.IdentityModel.Tokens.Jwt;
+using System.Reflection;
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
 namespace CatalogService.Api;
@@ -25,6 +29,32 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+
+        // Add Authentication
+        JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
+
+        var authSettings = builder.Configuration.GetSection("Authentication");
+
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.Authority = authSettings["Authority"];
+                options.Audience = authSettings["Audience"];
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = false,  // Disabled for development
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = authSettings["Authority"]
+                };
+            });
+
+        builder.Services.AddAuthorization();
+
+        // Add Keycloak claims transformation to map realm_access.roles to standard role claims
+        builder.Services.AddScoped<IClaimsTransformation, KeycloakClaimsTransformation>();
 
         // Add services to the container.
         builder.Services.AddControllers()
@@ -82,6 +112,32 @@ public class Program
                 Title = "Catalog Service API V1",
                 Version = "v1",
                 Description = "An API for managing categories and products - V1"
+            });
+
+            // Add JWT Bearer Security Definition
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                In = ParameterLocation.Header,
+                Description = "Please enter a valid JWT token",
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                BearerFormat = "JWT",
+                Scheme = "Bearer"
+            });
+
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    []
+                }
             });
         });
 
@@ -162,7 +218,10 @@ public class Program
         }
         
         app.UseCors("AllowLocalhost");
+
+        app.UseAuthentication();
         app.UseAuthorization();
+
         app.MapControllers();
 
         app.Run();

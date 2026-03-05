@@ -56,3 +56,4 @@ nunit-*.xml
 03.RESTfulWebAPI/.vs/
 04.MessageBasedArchitecture/.vs/
 05.Security/.vs/
+06.CodeQuality/.vs/

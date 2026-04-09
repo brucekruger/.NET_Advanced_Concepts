@@ -16,7 +16,7 @@ internal class Program
             .AddJsonFile("appsettings.json")
             .Build();
 
-        var connectionString = Configuration.GetConnectionString("LiteDB") 
+        var connectionString = Configuration.GetConnectionString("LiteDB")
             ?? throw new InvalidOperationException("LiteDB connection string not found in configuration.");
 
         // Ensure data directory exists

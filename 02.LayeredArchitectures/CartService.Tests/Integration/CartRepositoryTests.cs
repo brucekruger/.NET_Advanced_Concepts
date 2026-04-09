@@ -16,10 +16,10 @@ public class CartRepositoryTests : IDisposable
         // Use in-memory database for testing
         var memoryStream = new MemoryStream();
         _database = new LiteDatabase(memoryStream);
-        
+
         CartConfiguration.ConfigureMapping();
         CartConfiguration.EnsureIndexes(_database);
-        
+
         // Pass special connection string for memory database
         _repository = new CartRepository(_database);
     }
@@ -79,7 +79,7 @@ public class CartRepositoryTests : IDisposable
         var savedCart = _repository.GetCart(cart.Id);
         Assert.Contains(savedCart.CartItems, i => i.Id == item.Id);
     }
-        
+
     [Fact]
     public void UpdateItem_ShouldUpdateExistingItem()
     {

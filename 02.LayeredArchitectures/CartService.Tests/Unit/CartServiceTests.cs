@@ -67,7 +67,7 @@ public class CartServiceTests
         // Arrange
         var cart = _fixture.Create<Cart>();
         var item = _fixture.Create<CartItem>();
-        
+
         _cartRepositoryMock.Setup(x => x.GetCart(cart.Id))
             .Returns(cart);
         _cartRepositoryMock.Setup(x => x.AddItem(It.IsAny<CartItem>()))
@@ -94,8 +94,8 @@ public class CartServiceTests
         existingItem.Quantity = 1;
         cart.CartItems.Add(existingItem);
 
-        var newItem = new CartItem 
-        { 
+        var newItem = new CartItem
+        {
             Id = existingItem.Id,
             Quantity = 2
         };
@@ -212,7 +212,7 @@ public class CartServiceTests
     [Theory]
     [InlineData("")]
     [InlineData(null)]
-    public void GetCart_WhenCartIdIsInvalid_ShouldThrowArgumentException(string cartId)
+    public void GetCart_WhenCartIdIsInvalid_ShouldThrowArgumentException(string? cartId)
     {
         // Act & Assert
         Assert.Throws<ArgumentException>(() => _cartService.GetCart(cartId));

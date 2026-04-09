@@ -206,7 +206,7 @@ internal class Program
         }
 
         var category = new Category { Name = name };
-        
+
         if (!string.IsNullOrWhiteSpace(imageUrl))
         {
             if (Uri.TryCreate(imageUrl, UriKind.Absolute, out var uri))

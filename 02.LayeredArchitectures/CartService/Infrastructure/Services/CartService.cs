@@ -39,7 +39,7 @@ public class CartService : ICartService
 
         ArgumentNullException.ThrowIfNull(item);
 
-        var cart = GetCart(cartId) 
+        var cart = GetCart(cartId)
             ?? throw new InvalidOperationException($"Cart with ID {cartId} not found");
 
         var existingItem = cart.CartItems.FirstOrDefault(i => i.Id == item.Id);
@@ -54,7 +54,7 @@ public class CartService : ICartService
         var addedItem = _cartRepository.AddItem(item);
         cart.CartItems.Add(addedItem);
         _cartRepository.UpdateCart(cart);
-        
+
         return addedItem;
     }
 
@@ -112,7 +112,7 @@ public class CartService : ICartService
         cart.CartItems.Remove(item);
         _cartRepository.RemoveItem(itemId);
         _cartRepository.UpdateCart(cart);
-        
+
         return true;
     }
 
@@ -129,7 +129,7 @@ public class CartService : ICartService
         _cartRepository.RemoveItems(cart.Id);
         cart.CartItems.Clear();
         _cartRepository.UpdateCart(cart);
-        
+
         return true;
     }
 }

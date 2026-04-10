@@ -136,7 +136,7 @@ public class RabbitMqConsumer : IMessageConsumer, IDisposable
                     case ProductChangeType.Created:
                         break;
                     default:
-                        throw new ArgumentOutOfRangeException();
+                        throw new ArgumentOutOfRangeException(nameof(productEvent), productEvent.ChangeType, null);
                 }
             }
             cartService.UpdateCart(cart);

@@ -1,4 +1,4 @@
-﻿using CatalogService.Application.Interfaces;
+using CatalogService.Application.Interfaces;
 using CatalogService.Domain.Entities;
 using CatalogService.Infrastructure.Data.Extensions;
 
@@ -51,34 +51,34 @@ public class CategoryService : ICatalogService<Category>
         return await _categoryRepository.UpdateItemAsync(category, cancellationToken);
     }
 
-    public Task<int> DeleteItemAsync(int categoryId, CancellationToken cancellationToken)
+    public Task<int> DeleteItemAsync(int itemId, CancellationToken cancellationToken)
     {
-        return DeleteItemAsync(categoryId, cascadeDelete: false, cancellationToken);
+        return DeleteItemAsync(itemId, cascadeDelete: false, cancellationToken);
     }
 
-    public async Task<int> DeleteItemAsync(int categoryId, bool cascadeDelete, CancellationToken cancellationToken)
+    public async Task<int> DeleteItemAsync(int itemId, bool cascadeDelete, CancellationToken cancellationToken)
     {
-        var existingCategory = await _categoryRepository.GetItemAsync(categoryId, cancellationToken);
+        var existingCategory = await _categoryRepository.GetItemAsync(itemId, cancellationToken);
 
         if (existingCategory == null)
         {
-            throw new InvalidOperationException($"Category with ID {categoryId} does not exist.");
+            throw new InvalidOperationException($"Category with ID {itemId} does not exist.");
         }
 
         // Check if there are any products referencing this category
-        var hasProducts = await _categoryRepository.HasProductsAsync(categoryId, cancellationToken);
+        var hasProducts = await _categoryRepository.HasProductsAsync(itemId, cancellationToken);
 
         if (hasProducts && !cascadeDelete)
         {
-            throw new InvalidOperationException($"Cannot delete category with ID {categoryId} because it has associated products. Please delete or reassign the products first, or use cascade delete.");
+            throw new InvalidOperationException($"Cannot delete category with ID {itemId} because it has associated products. Please delete or reassign the products first, or use cascade delete.");
         }
 
         // If cascade delete is enabled, delete all associated products first
         if (cascadeDelete && hasProducts)
         {
-            await _categoryRepository.DeleteProductsByCategoryIdAsync(categoryId, cancellationToken);
+            await _categoryRepository.DeleteProductsByCategoryIdAsync(itemId, cancellationToken);
         }
 
-        return await _categoryRepository.DeleteItemAsync(categoryId, cancellationToken);
+        return await _categoryRepository.DeleteItemAsync(itemId, cancellationToken);
     }
 }

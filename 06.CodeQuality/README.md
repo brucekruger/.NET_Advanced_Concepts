@@ -328,6 +328,320 @@ To view token details:
 
 ---
 
+## 🛠️ Code Quality & Style Setup
+
+This project enforces consistent code style and quality standards across all team members using industry-leading tools.
+
+### EditorConfig
+
+The `.editorconfig` file at the solution root defines formatting rules applied automatically by Visual Studio:
+
+- **Indentation:** 4 spaces (no tabs)
+- **Line endings:** CRLF
+- **Charset:** UTF-8
+- **Sorted using statements:** System directives first
+- **Naming conventions:** PascalCase, camelCase, _camelCase patterns
+- **Code style preferences:** Nullable reference types, pattern matching, etc.
+
+**These rules apply automatically** when you open the solution in Visual Studio.
+
+### dotnet-format Tool
+
+Validate and fix code formatting from the command line:
+
+#### Installation
+
+# Install globally (one-time setup)
+dotnet tool install -g dotnet-format
+
+#### Verify Formatting (without changes)
+
+# Check if code matches formatting rules
+dotnet format --verify-no-changes --verbosity diagnostic
+
+#### Apply Formatting Fixes
+
+# Automatically fix formatting issues
+dotnet format
+
+#### Usage in CI/CD
+
+# Fail build if formatting violations exist
+dotnet format --verify-no-changes
+
+### Pre-Push Git Hook (Optional)
+
+A Git pre-push hook can automatically validate code style before pushing.
+
+#### Setup
+
+1. Create `.githooks/pre-push` file at solution root
+2. Configure Git to use the hooks directory:
+
+git config core.hooksPath .githooks
+
+#### What It Does
+
+When you run `git push`, the hook:
+- Runs `dotnet format --verify-no-changes`
+- **Prevents push** if formatting violations exist
+- Provides clear error messages
+
+#### Override Hook (if needed)
+
+# Push without running the pre-push hook (not recommended)
+git push --no-verify
+
+### Analyzer Rules
+
+The `.editorconfig` enables **3+ additional analyzer checks** beyond defaults:
+
+| Rule ID | Check | Severity |
+|---------|-------|----------|
+| `dotnet_sort_system_directives_first` | Sort using statements (System first) | Built-in |
+| **CA2249** | Use `String.Contains` instead of `String.IndexOf` | Suggestion |
+| **CA1849** | Call async methods when in async method | Suggestion |
+| **CA1826** | Use property instead of Linq Enumerable method | Suggestion |
+
+These appear as **warnings/suggestions** in Visual Studio's Error List during build.
+
+---
+
+## 📊 SonarQube Code Quality Analysis
+
+SonarQube provides comprehensive code quality metrics, security vulnerabilities, and code smells detection.
+
+### Prerequisites
+
+- **Docker** installed on your machine
+- **SonarQube Community Edition** (or higher)
+
+### Installation & Setup
+
+#### Step 1: Start SonarQube with Docker
+
+# Pull and run SonarQube Community Edition
+docker run -d --name sonarqube -p 9000:9000 sonarqube:latest
+
+# Wait for startup (1-2 minutes)
+docker logs -f sonarqube
+
+#### Step 2: Access SonarQube Dashboard
+
+Open browser and navigate to:
+
+http://localhost:9000
+
+**Default Credentials:**
+- Username: `admin`
+- Password: `admin`
+
+**Change password on first login** for security.
+
+#### Step 3: Create Project
+
+1. Click **Projects** → **Create Project**
+2. **Project Key:** `dotnet-advanced-concepts`
+3. **Display Name:** `.NET Advanced Concepts`
+4. Click **Create**
+
+#### Step 4: Generate Authentication Token
+
+1. Click your **profile icon** (top-right) → **My Account** → **Security**
+2. Click **Generate Tokens**
+3. **Name:** `dotnet-analysis`
+4. Click **Generate** and **copy the token** (you'll need it for analysis)
+
+#### Step 5: Install SonarScanner
+
+# Install globally
+dotnet tool install -g dotnet-sonarscanner
+
+### Running Code Analysis
+
+#### Initial Analysis
+
+Navigate to your solution root and run:
+
+# Begin analysis session
+dotnet sonarscanner begin \
+  /k:"dotnet-advanced-concepts" \
+  /d:sonar.host.url="http://localhost:9000" \
+  /d:sonar.login="YOUR_SONARQUBE_TOKEN"
+
+# Build your solution
+dotnet build
+
+# End analysis and publish results
+dotnet sonarscanner end \
+  /d:sonar.login="YOUR_SONARQUBE_TOKEN"
+
+**Windows PowerShell:**
+$token = "YOUR_SONARQUBE_TOKEN"
+
+dotnet sonarscanner begin `
+  /k:"dotnet-advanced-concepts" `
+  /d:sonar.host.url="http://localhost:9000" `
+  /d:sonar.login="$token"
+
+dotnet build
+
+dotnet sonarscanner end /d:sonar.login="$token"
+
+#### Re-run Analysis After Fixes
+
+After fixing code issues, run the same commands to get updated metrics:
+
+dotnet sonarscanner begin /k:"dotnet-advanced-concepts" /d:sonar.host.url="http://localhost:9000" /d:sonar.login="YOUR_TOKEN"
+dotnet build
+dotnet sonarscanner end /d:sonar.login="YOUR_TOKEN"
+
+### Viewing Results
+
+#### Dashboard
+
+After analysis completes, view results at:
+
+http://localhost:9000/dashboard?id=dotnet-advanced-concepts
+
+Shows:
+- ✅ **Quality Gate** - Pass/Fail status
+- 📊 **Metrics** - Complexity, duplications, code coverage
+- 🔒 **Security** - Vulnerabilities and security hotspots
+- 🐛 **Reliability** - Bugs and blockers
+- 🧹 **Maintainability** - Code smells and technical debt
+
+#### Issues
+
+Review code issues:
+
+1. Go to **Issues** section
+2. **Filter by Severity:**
+   - **Blocker** - Must fix immediately
+   - **Critical** - Should fix soon
+   - **Major** - Fix before release
+   - **Minor** - Nice to fix
+   - **Info** - FYI
+
+3. Click any issue to see:
+   - **Location** - File and line number
+   - **Rule** - What the rule checks
+   - **Explanation** - Why it's an issue
+   - **Solution** - How to fix it
+
+### Example Fixes
+
+#### Issue: Hardcoded Credentials
+
+**Before:**
+```csharp
+var connection = new ConnectionFactory
+{
+    HostName = "localhost",
+    UserName = "guest",
+    Password = "guest"  // ❌ Hardcoded credential
+};
+```
+
+**After:**
+```csharp
+var settings = configuration.GetSection("RabbitMq").Get<RabbitMqSettings>();
+var connection = new ConnectionFactory
+{
+    HostName = settings.HostName,
+    UserName = settings.UserName,
+    Password = settings.Password
+};
+```
+
+#### Issue: Missing Null Check
+
+**Before:**
+```csharp
+public void ProcessOrder(Order order)
+{
+    var total = order.Items.Sum(x => x.Price);  // ❌ NullReferenceException if order is null
+}
+```
+
+**After:**
+```csharp
+public void ProcessOrder(Order? order)
+{
+    if (order is null)
+        throw new ArgumentNullException(nameof(order));
+        
+    var total = order.Items.Sum(x => x.Price);
+}
+```
+
+### Continuous Integration
+
+#### GitHub Actions Workflow
+
+Create `.github/workflows/sonarqube-analysis.yml`:
+
+name: SonarQube Analysis
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  sonarqube:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Install SonarScanner
+        run: dotnet tool install -g dotnet-sonarscanner
+
+      - name: Begin SonarQube Analysis
+        run: |
+          dotnet sonarscanner begin \
+            /k:"dotnet-advanced-concepts" \
+            /d:sonar.host.url="${{ secrets.SONARQUBE_HOST }}" \
+            /d:sonar.login="${{ secrets.SONARQUBE_TOKEN }}"
+
+      - name: Build
+        run: dotnet build --no-restore
+
+      - name: End SonarQube Analysis
+        run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONARQUBE_TOKEN }}"
+
+Add GitHub Secrets:
+- `SONARQUBE_HOST`: `http://localhost:9000` (or your SonarQube URL)
+- `SONARQUBE_TOKEN`: Your generated token
+
+### Ignoring SonarQube Files
+
+Add to `.gitignore`:
+# SonarQube analysis
+.sonarqube/
+.sonartmp/
+.sonar/
+
+### References
+
+- [SonarQube Documentation](https://docs.sonarqube.org/)
+- [SonarScanner for .NET](https://docs.sonarqube.org/latest/analysis/scan/sonarscanner-for-dotnet/)
+- [EditorConfig Documentation](https://editorconfig.org/)
+- [dotnet-format GitHub](https://github.com/dotnet/format)
+
+---
+
 ## Common Docker Compose Commands
 
 ### Stop Services

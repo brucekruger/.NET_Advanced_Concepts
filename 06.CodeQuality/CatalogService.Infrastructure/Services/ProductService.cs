@@ -69,21 +69,21 @@ public class ProductService : ICatalogService<Product>
         return result;
     }
 
-    public async Task<int> DeleteItemAsync(int productId, CancellationToken cancellationToken)
+    public async Task<int> DeleteItemAsync(int itemId, CancellationToken cancellationToken)
     {
-        var existingProduct = await _productRepository.GetItemAsync(productId, cancellationToken);
+        var existingProduct = await _productRepository.GetItemAsync(itemId, cancellationToken);
 
         if (existingProduct == null)
         {
-            throw new InvalidOperationException($"Product with ID {productId} does not exist.");
+            throw new InvalidOperationException($"Product with ID {itemId} does not exist.");
         }
 
-        var result = await _productRepository.DeleteItemAsync(productId, cancellationToken);
+        var result = await _productRepository.DeleteItemAsync(itemId, cancellationToken);
 
         // Publish product deleted event
         if (result > 0)
         {
-            await _eventPublisher.PublishProductDeletedAsync(productId, cancellationToken);
+            await _eventPublisher.PublishProductDeletedAsync(itemId, cancellationToken);
         }
 
         return result;

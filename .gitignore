@@ -57,3 +57,4 @@ nunit-*.xml
 04.MessageBasedArchitecture/.vs/
 05.Security/.vs/
 06.CodeQuality/.vs/
+06.CodeQuality/.sonarqube/

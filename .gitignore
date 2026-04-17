@@ -58,3 +58,7 @@ nunit-*.xml
 05.Security/.vs/
 06.CodeQuality/.vs/
 06.CodeQuality/.sonarqube/
+07.Containerization/.sonarqube/
+07.Containerization/.vs/07.Containerization/CopilotIndices/
+07.Containerization/.vs/07.Containerization/FileContentIndex/
+07.Containerization/.vs/

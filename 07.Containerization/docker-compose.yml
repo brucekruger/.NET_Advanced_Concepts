@@ -1,98 +1,273 @@
-version: '3.8'
-
 services:
-  rabbitmq:
-    image: rabbitmq:4.2.2-management
-    container_name: rabbitmq-container
-    hostname: rabbitmq
+  # SQL Server Database for Catalog Service
+  catalog-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: catalog-db
+    user: root
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "YourStrongPassword123!"
+      MSSQL_PID: "Developer"
+      MSSQL_COLLATION: "SQL_Latin1_General_CP1_CI_AS"
     ports:
-      - "5672:5672"     # AMQP port for message broker
-      - "15672:15672"   # Management UI port
+      - "1433:1433"
+    volumes:
+      - catalog-db-data:/var/opt/mssql/data
+      - catalog-db-logs:/var/opt/mssql/log
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrongPassword123! -Q 'SELECT 1' || exit 1"]
+      interval: 20s
+      timeout: 15s
+      retries: 15
+      start_period: 120s
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # Redis Cache Database for Cart Service
+  cart-cache:
+    image: redis:7-alpine
+    container_name: cart-cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - cart-cache-data:/data
+    networks:
+      - microservices-network
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: rabbitmq
+    user: root
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
       RABBITMQ_DEFAULT_VHOST: /
+    ports:
+      - "5672:5672"
+      - "15672:15672"
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-      - rabbitmq_logs:/var/log/rabbitmq
-    healthcheck:
-      test: rabbitmq-diagnostics -q ping
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 40s
+      - rabbitmq-data:/var/lib/rabbitmq
     networks:
       - microservices-network
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
 
-  # PostgreSQL for Keycloak Identity Server
-  postgres:
+  # PostgreSQL Database for Keycloak
+  keycloak-db:
     image: postgres:16-alpine
-    container_name: postgres-container
-    hostname: postgres
+    container_name: keycloak-db
     environment:
       POSTGRES_DB: keycloak
       POSTGRES_USER: keycloak
       POSTGRES_PASSWORD: keycloak
-      POSTGRES_INITDB_ARGS: "-c max_connections=200"
-    ports:
-      - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - keycloak-db-data:/var/lib/postgresql/data
     networks:
       - microservices-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      test: ["CMD-SHELL", "pg_isready -U keycloak"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 20s
-    restart: unless-stopped
+      retries: 10
+      start_period: 10s
+    restart: on-failure
 
-  # Keycloak Identity and Access Management Server
+  # Keycloak Identity Provider (imports the microservices-realm on startup)
   keycloak:
-    image: keycloak/keycloak:24.0.0
-    container_name: keycloak-container
-    hostname: keycloak
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: keycloak
+    command: ["start-dev", "--import-realm"]
     environment:
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
-      KC_DB_USERNAME: keycloak
-      KC_DB_PASSWORD: keycloak
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin123
-      KC_PROXY: edge
-      KC_HTTP_ENABLED: "true"
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      # Pin the public frontend (issuer + auth + admin console) to a host-reachable
+      # URL. Keycloak still serves backend endpoints (token/JWKS) on the request
+      # host, so the API services resolve keys via http://keycloak:8080 internally
+      # while browsers and Postman use http://localhost:8090.
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: "8090"
       KC_HOSTNAME_STRICT: "false"
-      KC_LOG_LEVEL: INFO
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
     ports:
-      - "8080:8080"
-    command: start-dev
-    depends_on:
-      postgres:
-        condition: service_healthy
+      # Host 8090 avoids colliding with catalog-service (host 8080). The container
+      # still listens on 8080, so the API services reach it at http://keycloak:8080.
+      - "8090:8080"
     volumes:
-      - keycloak_data:/opt/keycloak/data
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
     networks:
       - microservices-network
     healthcheck:
-      test: curl --fail http://localhost:8080/health/ready || exit 1
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
       start_period: 40s
-    restart: unless-stopped
+    restart: on-failure
+
+  # Catalog Service - ASP.NET Core API
+  catalog-service:
+    build:
+      context: .
+      dockerfile: CatalogService.Api/Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    container_name: catalog-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__MSSQL: "Server=catalog-db;Database=CatalogDB;User Id=sa;Password=YourStrongPassword123!;TrustServerCertificate=true;MultipleActiveResultSets=true;"
+      RabbitMq__HostName: "rabbitmq"
+      RabbitMq__Port: "5672"
+      RabbitMq__UserName: "guest"
+      RabbitMq__Password: "guest"
+      RabbitMq__VirtualHost: "/"
+      RabbitMq__MaxRetryCount: "5"
+      RabbitMq__RetryDelayMs: "3000"
+      Authentication__Authority: "http://localhost:8090/realms/microservices-realm"
+      Authentication__ValidIssuer: "http://localhost:8090/realms/microservices-realm"
+      Authentication__MetadataAddress: "http://keycloak:8080/realms/microservices-realm/.well-known/openid-configuration"
+      Authentication__Audience: "catalog-service"
+      Logging__LogLevel__Default: "Information"
+    ports:
+      - "8080:8080"
+    depends_on:
+      catalog-db:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    networks:
+      - microservices-network
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+  # Cart Service - ASP.NET Core API
+  cart-service:
+    build:
+      context: .
+      dockerfile: CartService.Api/Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    container_name: cart-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8081
+      ConnectionStrings__LiteDB: "/app/data/Cart.db"
+      ConnectionStrings__Redis: "cart-cache:6379"
+      RabbitMq__HostName: "rabbitmq"
+      RabbitMq__Port: "5672"
+      RabbitMq__UserName: "guest"
+      RabbitMq__Password: "guest"
+      RabbitMq__VirtualHost: "/"
+      RabbitMq__MaxRetryCount: "5"
+      RabbitMq__RetryDelayMs: "3000"
+      Authentication__Authority: "http://localhost:8090/realms/microservices-realm"
+      Authentication__ValidIssuer: "http://localhost:8090/realms/microservices-realm"
+      Authentication__MetadataAddress: "http://keycloak:8080/realms/microservices-realm/.well-known/openid-configuration"
+      Authentication__Audience: "cart-service"
+      Logging__LogLevel__Default: "Information"
+    ports:
+      - "8081:8081"
+    volumes:
+      - cart-data:/app/data
+    depends_on:
+      cart-cache:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    networks:
+      - microservices-network
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
 
 volumes:
-  rabbitmq_data:
+  catalog-db-data:
     driver: local
-  rabbitmq_logs:
+  catalog-db-logs:
     driver: local
-  postgres_data:
+  cart-cache-data:
     driver: local
-  keycloak_data:
+  rabbitmq-data:
+    driver: local
+  cart-data:
+    driver: local
+  keycloak-db-data:
     driver: local
 
 networks:
   microservices-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

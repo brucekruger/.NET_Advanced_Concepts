@@ -1,0 +1,84 @@
+{
+  "realm": "microservices-realm",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "Manager",
+        "description": "Can manage catalog and carts"
+      },
+      {
+        "name": "StoreCustomer",
+        "description": "Regular store customer"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "catalog-service",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "catalog-service-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "redirectUris": ["http://localhost:5063/*", "http://localhost:8080/*"],
+      "webOrigins": ["http://localhost:5063", "*"],
+      "fullScopeAllowed": true
+    },
+    {
+      "clientId": "cart-service",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "cart-service-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "redirectUris": ["http://localhost:5064/*", "http://localhost:8081/*"],
+      "webOrigins": ["http://localhost:5064", "*"],
+      "fullScopeAllowed": true
+    }
+  ],
+  "users": [
+    {
+      "username": "manager@example.com",
+      "email": "manager@example.com",
+      "firstName": "Manager",
+      "lastName": "User",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "managers_password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["Manager"]
+    },
+    {
+      "username": "customer@example.com",
+      "email": "customer@example.com",
+      "firstName": "Store",
+      "lastName": "Customer",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "customers_password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["StoreCustomer"]
+    }
+  ]
+}

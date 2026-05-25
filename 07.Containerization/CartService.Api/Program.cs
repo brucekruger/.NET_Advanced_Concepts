@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RabbitMQ.Client;
+using StackExchange.Redis;
 using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
 using CartService.Api.Extensions;
@@ -35,6 +36,14 @@ public class Program
             {
                 options.RequireHttpsMetadata = false;
                 options.Authority = authSettings["Authority"];
+                // When set, fetch OIDC metadata/keys from an internally reachable
+                // address (e.g. http://keycloak:8080) while still validating the
+                // public issuer advertised to clients.
+                var metadataAddress = authSettings["MetadataAddress"];
+                if (!string.IsNullOrEmpty(metadataAddress))
+                {
+                    options.MetadataAddress = metadataAddress;
+                }
                 options.Audience = authSettings["Audience"];
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
@@ -42,7 +51,7 @@ public class Program
                     ValidateAudience = false,  // Disabled for development
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    ValidIssuer = authSettings["Authority"]
+                    ValidIssuer = authSettings["ValidIssuer"] ?? authSettings["Authority"]
                 };
             });
 
@@ -53,6 +62,8 @@ public class Program
 
         // Add services to the container.
         builder.Services.AddControllers();
+
+        builder.Services.AddHealthChecks();
 
         // Add CORS configuration
         builder.Services.AddCors(options =>
@@ -139,10 +150,21 @@ public class Program
             });
         });
 
+        // Register Redis Connection Multiplexer
+        var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+        if (!string.IsNullOrEmpty(redisConnectionString))
+        {
+            var redisOptions = ConfigurationOptions.Parse(redisConnectionString);
+            redisOptions.AbortOnConnectFail = false;
+            var connectionMultiplexer = ConnectionMultiplexer.Connect(redisOptions);
+            builder.Services.AddSingleton<IConnectionMultiplexer>(connectionMultiplexer);
+        }
+
         builder.Services.AddScoped<ICartRepository, CartRepository>(sp =>
         {
             var connectionString = builder.Configuration.GetConnectionString("LiteDB");
-            return new CartRepository(connectionString ?? throw new InvalidOperationException("LiteDB connection string is not configured"));
+            var redis = sp.GetService<IConnectionMultiplexer>();
+            return new CartRepository(connectionString ?? throw new InvalidOperationException("LiteDB connection string is not configured"), redis);
         });
 
         // Configure LiteDB
@@ -180,17 +202,17 @@ public class Program
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
+        // Swagger is enabled in all environments so the containerized API can be
+        // explored and tested via /swagger.
+        app.UseSwagger();
+        app.UseSwaggerUI(options =>
         {
-            app.UseSwagger();
-            app.UseSwaggerUI(options =>
-            {
-                options.SwaggerEndpoint("/swagger/v1/swagger.json", "Cart Service API V1");
-                options.SwaggerEndpoint("/swagger/v2/swagger.json", "Cart Service API V2");
-                options.RoutePrefix = string.Empty;
-            });
-        }
-        else
+            options.SwaggerEndpoint("/swagger/v1/swagger.json", "Cart Service API V1");
+            options.SwaggerEndpoint("/swagger/v2/swagger.json", "Cart Service API V2");
+            options.RoutePrefix = "swagger";
+        });
+
+        if (!app.Environment.IsDevelopment())
         {
             app.UseHttpsRedirection();
         }
@@ -203,6 +225,7 @@ public class Program
         app.UseAuthorization();
 
         app.MapControllers();
+        app.MapHealthChecks("/health").AllowAnonymous();
 
         app.Run();
     }

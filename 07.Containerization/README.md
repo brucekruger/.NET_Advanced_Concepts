@@ -2,6 +2,137 @@
 
 This project uses **RabbitMQ** as the message broker for asynchronous communication between microservices (CartService and CatalogService). It also includes **PostgreSQL** as the database for **Keycloak** identity server.
 
+> **Looking to run everything in containers?** Jump to **[Containerization (Docker Compose)](#containerization-docker-compose)**. That section is the single source of truth for building, running, and testing the full stack (both services + all external dependencies) in Docker. The manual "Keycloak Setup Guide" further below is **only** needed for the legacy local-dev workflow (`dotnet run` on the host) — the containerized stack imports the realm automatically.
+
+---
+
+## Containerization (Docker Compose)
+
+The entire system runs as containers via a single `docker-compose.yml`. Both microservices and **all** their external dependencies are containerized using pre-built images, so no local databases, brokers, or identity servers are required.
+
+### What runs in the stack
+
+| Container | Image | Host URL / Port | Role |
+|-----------|-------|-----------------|------|
+| `catalog-service` | built from `CatalogService.Api/Dockerfile` | `http://localhost:8080` | Catalog REST API (ASP.NET Core) |
+| `cart-service` | built from `CartService.Api/Dockerfile` | `http://localhost:8081` | Cart REST API (ASP.NET Core) |
+| `catalog-db` | `mcr.microsoft.com/mssql/server:2022-latest` | `localhost:1433` | SQL Server — Catalog relational store |
+| `cart-cache` | `redis:7-alpine` | `localhost:6379` | Redis — Cart cache (NoSQL) |
+| `rabbitmq` | `rabbitmq:3.12-management-alpine` | `localhost:5672`, UI `localhost:15672` | Message broker (Catalog → Cart events) |
+| `keycloak` | `quay.io/keycloak/keycloak:24.0` | `http://localhost:8090` | Identity provider (OIDC/JWT) |
+| `keycloak-db` | `postgres:16-alpine` | internal only | PostgreSQL backing store for Keycloak |
+
+**External dependencies that were containerized:** SQL Server (relational DB), Redis (NoSQL cache), RabbitMQ (message broker), and Keycloak + PostgreSQL (auth). The Cart service additionally keeps an embedded **LiteDB** file persisted in a Docker volume.
+
+> Note: the Cart service uses Redis as a read cache in front of its embedded LiteDB store; both are persisted to volumes.
+
+### Prerequisites
+
+- **Docker** and **Docker Compose v2** (Docker Desktop). Nothing else is required to run the stack — the .NET SDK is only needed for local (non-container) development.
+
+### Build, run, and test
+
+From the project root (`07.Containerization`):
+
+```bash
+# Build the API images and start the whole stack
+docker compose up -d --build
+
+# Watch until every service reports healthy (first run takes a few minutes:
+# SQL Server and Keycloak are slow to initialize)
+docker compose ps
+```
+
+On first start the stack is self-initializing:
+
+- **Catalog** waits for SQL Server and auto-creates the `CatalogDB` schema on startup (with a retry loop), so no manual migration step is needed.
+- **Keycloak** imports the `microservices-realm` from `keycloak/realm-export.json` — clients, roles, and test users are created automatically.
+- **Cart** logs a benign `products.changed` queue warning until the Catalog publisher declares the queue; it retries automatically.
+
+### Verify the services
+
+```bash
+# Health endpoints (return HTTP 200 "Healthy")
+curl http://localhost:8080/health      # Catalog
+curl http://localhost:8081/health      # Cart
+```
+
+| What | URL |
+|------|-----|
+| Catalog Swagger UI | `http://localhost:8080/swagger` |
+| Catalog health | `http://localhost:8080/health` |
+| Cart Swagger UI | `http://localhost:8081/swagger` |
+| Cart health | `http://localhost:8081/health` |
+| Keycloak admin console | `http://localhost:8090/admin/` |
+| RabbitMQ management UI | `http://localhost:15672` |
+
+### Credentials
+
+| Service | Username | Password |
+|---------|----------|----------|
+| Keycloak admin console | `admin` | `admin123` |
+| RabbitMQ management UI | `guest` | `guest` |
+| SQL Server (`sa`) | `sa` | `YourStrongPassword123!` |
+
+**Pre-imported Keycloak realm** (`microservices-realm`):
+
+- Clients: `catalog-service` (secret `catalog-service-secret`), `cart-service` (secret `cart-service-secret`)
+- Roles: `Manager`, `StoreCustomer`
+- Test users: `manager@example.com` / `managers_password` (Manager), `customer@example.com` / `customers_password` (StoreCustomer)
+
+### Authentication notes (important)
+
+The API endpoints are protected with JWT bearer auth. Keycloak's public **issuer is pinned to `http://localhost:8090`**, while the API services fetch signing keys internally from `http://keycloak:8080` (configured via `Authentication__MetadataAddress`). This keeps a single consistent issuer for both browsers/Postman on the host **and** the in-network services.
+
+Get a token from the host and call a protected endpoint:
+
+```bash
+# Request an access token (password grant)
+curl -X POST "http://localhost:8090/realms/microservices-realm/protocol/openid-connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "client_id=catalog-service&client_secret=catalog-service-secret&grant_type=password&username=manager@example.com&password=managers_password&scope=openid"
+
+# Call the API with the returned access_token
+curl http://localhost:8080/api/products -H "Authorization: Bearer <access_token>"
+```
+
+Calling a protected endpoint without a token returns `401`; with a valid token it returns `200`. Manager-only operations (POST/PUT/DELETE) require a token for the `manager@example.com` user.
+
+### Configuration (environment variables)
+
+Container configuration is supplied through `docker-compose.yml` environment variables (overriding `appsettings.json`):
+
+- `ConnectionStrings__MSSQL` → `Server=catalog-db;Database=CatalogDB;...`
+- `ConnectionStrings__Redis` → `cart-cache:6379`
+- `RabbitMq__HostName` → `rabbitmq`
+- `Authentication__Authority` / `Authentication__ValidIssuer` → `http://localhost:8090/realms/microservices-realm`
+- `Authentication__MetadataAddress` → `http://keycloak:8080/realms/microservices-realm/.well-known/openid-configuration`
+
+### Data persistence (volumes)
+
+`catalog-db-data`, `catalog-db-logs`, `cart-cache-data`, `cart-data` (LiteDB), `rabbitmq-data`, `keycloak-db-data`. Data survives restarts; use `docker compose down -v` to wipe it.
+
+### Common commands
+
+```bash
+docker compose up -d --build      # build images + start
+docker compose ps                 # status / health
+docker compose logs -f cart-service
+docker compose restart catalog-service
+docker compose down               # stop (keep data)
+docker compose down -v            # stop + remove volumes
+```
+
+### Troubleshooting
+
+- **`catalog-db` shows `unhealthy`** — cosmetic. It is only the SQL Server container's own health-check command; the database itself works (confirmed by `/api/products` returning 200).
+- **Cart logs `no queue 'products.changed'`** — benign startup ordering; the consumer retries until the Catalog publisher declares the queue.
+- **`/swagger` returns 404 or a port is refused** — make sure you rebuilt with `--build`; a plain restart keeps old images.
+- **Keycloak admin console hangs / empty response** — use `http://localhost:8090/admin/` (not the bare root) and an incognito tab to avoid cached redirects.
+- **`401` on API calls** — tokens minted before the issuer was set to `localhost:8090` are rejected; request a fresh token.
+
+---
+
 ## Prerequisites
 
 - **Docker** installed on your machine

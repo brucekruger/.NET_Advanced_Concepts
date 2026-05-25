@@ -156,6 +156,13 @@ public class RabbitMqConsumer : IMessageConsumer, IDisposable
             _logger.LogInformation("RabbitMQ queue verified: {QueueName}", 
                 _settings.ProductChangedQueueName);
         }
+        catch (RabbitMQ.Client.Exceptions.OperationInterruptedException ex) when (ex.ShutdownReason?.ReplyCode == 404)
+        {
+            // Queue doesn't exist yet - this is normal if the Catalog Service hasn't started yet
+            // The queue will be created when the publisher connects
+            _logger.LogWarning(ex, "RabbitMQ queue does not exist yet: {QueueName}. Will be created by publisher.", 
+                _settings.ProductChangedQueueName);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to initialize RabbitMQ queue");

@@ -40,6 +40,14 @@ public class Program
             {
                 options.RequireHttpsMetadata = false;
                 options.Authority = authSettings["Authority"];
+                // When set, fetch OIDC metadata/keys from an internally reachable
+                // address (e.g. http://keycloak:8080) while still validating the
+                // public issuer advertised to clients.
+                var metadataAddress = authSettings["MetadataAddress"];
+                if (!string.IsNullOrEmpty(metadataAddress))
+                {
+                    options.MetadataAddress = metadataAddress;
+                }
                 options.Audience = authSettings["Audience"];
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
@@ -47,7 +55,7 @@ public class Program
                     ValidateAudience = false,  // Disabled for development
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    ValidIssuer = authSettings["Authority"]
+                    ValidIssuer = authSettings["ValidIssuer"] ?? authSettings["Authority"]
                 };
             });
 
@@ -141,14 +149,16 @@ public class Program
             });
         });
 
-        Configuration = new ConfigurationBuilder()
-            .AddJsonFile("appsettings.json") // This extension method is in Microsoft.Extensions.Configuration.Json
-            .Build();
+        // Use the host configuration so environment variables (e.g. ConnectionStrings__MSSQL
+        // provided by docker-compose) override appsettings.json values.
+        Configuration = builder.Configuration;
 
-        var connectionString = Configuration.GetConnectionString("MSSQL");
+        var connectionString = builder.Configuration.GetConnectionString("MSSQL");
 
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(connectionString));
+
+        builder.Services.AddHealthChecks();
 
         builder.Services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
         builder.Services.AddScoped<IRepository<Category>, CategoryRepository>();
@@ -202,17 +212,40 @@ public class Program
         
         var app = builder.Build();
 
-        // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
+        // Ensure the database exists. SQL Server in a container can take a while to
+        // accept connections, so retry a few times before giving up.
+        using (var scope = app.Services.CreateScope())
         {
-            app.UseSwagger();
-            app.UseSwaggerUI(options =>
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+            const int maxAttempts = 12;
+            for (var attempt = 1; attempt <= maxAttempts; attempt++)
             {
-                options.SwaggerEndpoint("/swagger/v1/swagger.json", "Catalog Service API V1");
-                options.RoutePrefix = string.Empty;
-            });
+                try
+                {
+                    dbContext.Database.EnsureCreated();
+                    logger.LogInformation("Database initialized successfully.");
+                    break;
+                }
+                catch (Exception ex) when (attempt < maxAttempts)
+                {
+                    logger.LogWarning(ex, "Database not ready (attempt {Attempt}/{MaxAttempts}). Retrying in 5s...", attempt, maxAttempts);
+                    Thread.Sleep(TimeSpan.FromSeconds(5));
+                }
+            }
         }
-        else
+
+        // Configure the HTTP request pipeline.
+        // Swagger is enabled in all environments so the containerized API can be
+        // explored and tested via /swagger.
+        app.UseSwagger();
+        app.UseSwaggerUI(options =>
+        {
+            options.SwaggerEndpoint("/swagger/v1/swagger.json", "Catalog Service API V1");
+            options.RoutePrefix = "swagger";
+        });
+
+        if (!app.Environment.IsDevelopment())
         {
             app.UseHttpsRedirection();
         }
@@ -223,6 +256,7 @@ public class Program
         app.UseAuthorization();
 
         app.MapControllers();
+        app.MapHealthChecks("/health").AllowAnonymous();
 
         app.Run();
     }

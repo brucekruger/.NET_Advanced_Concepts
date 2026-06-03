@@ -62,3 +62,7 @@ nunit-*.xml
 07.Containerization/.vs/07.Containerization/CopilotIndices/
 07.Containerization/.vs/07.Containerization/FileContentIndex/
 07.Containerization/.vs/
+08.GraphQLAPI/.github/
+08.GraphQLAPI/.sonarqube/
+08.GraphQLAPI/.vs/08.GraphQLAPI/CopilotIndices/
+08.GraphQLAPI/.vs/

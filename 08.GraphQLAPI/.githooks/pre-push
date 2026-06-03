@@ -1,0 +1,26 @@
+#!/bin/bash
+
+echo "🔍 Running dotnet-format to check code style..."
+
+# Find the solution or project file
+WORKSPACE=$(find . -maxdepth 2 -name "*.sln" -o -name "*.csproj" | head -1)
+
+if [ -z "$WORKSPACE" ]; then
+    echo "❌ ERROR: Could not find a solution or project file!"
+    exit 1
+fi
+
+# Check formatting without applying fixes
+dotnet format "$WORKSPACE" --verify-no-changes --verbosity diagnostic
+
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ ERROR: Code style violations detected!"
+    echo "💡 Run 'dotnet format' locally to fix formatting:"
+    echo "   dotnet format \"$WORKSPACE\""
+    echo ""
+    exit 1
+fi
+
+echo "✅ Code style validation passed!"
+exit 0

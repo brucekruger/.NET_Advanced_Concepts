@@ -1,5 +1,7 @@
 using CatalogService.Api.Interfaces;
+using CatalogService.Api.Mapping;
 using CatalogService.Api.Services;
+using CatalogService.Application.Handlers;
 using CatalogService.Application.Interfaces;
 using CatalogService.Domain.Entities;
 using CatalogService.Infrastructure.Data;
@@ -18,6 +20,12 @@ using Microsoft.OpenApi.Models;
 using RabbitMQ.Client;
 using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
+using System.Security.Claims;
+using CatalogService.Api.GraphQL.DataLoaders;
+using CatalogService.Api.GraphQL.Mutations;
+using CatalogService.Api.GraphQL.Queries;
+using CatalogService.Api.GraphQL.Types;
+using Path = System.IO.Path;
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
 namespace CatalogService.Api;
@@ -26,10 +34,21 @@ public class Program
 {
     public static IConfiguration? Configuration { get; private set; }
 
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        // Add MediatR
+        builder.Services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssembly(typeof(CreateCategoryCommandHandler).Assembly);
+        });
+
+        // Add AutoMapper
+        // Explicitly specify the namespace for AddAutoMapper:
+        builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
+
+                
         // Add Authentication
         JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
 
@@ -38,20 +57,119 @@ public class Program
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
-                options.RequireHttpsMetadata = false;
-                options.Authority = authSettings["Authority"];
+                // Use HTTPS metadata for production when Authority is https
+                var authority = authSettings["Authority"];
+                options.RequireHttpsMetadata = !(authority?.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ?? false);
+                options.Authority = authority;
                 options.Audience = authSettings["Audience"];
+
+                var audience = authSettings["Audience"];
+                // Disable built-in audience validation and perform a custom check in OnTokenValidated
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
-                    ValidateAudience = false,  // Disabled for development
+                    ValidateAudience = false,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    ValidIssuer = authSettings["Authority"]
+                    // Allow specifying an explicit ValidIssuer in config, fall back to Authority
+                    ValidIssuer = authSettings["ValidIssuer"] ?? authority,
+                    // Map Keycloak claims to ASP.NET identity
+                    NameClaimType = "preferred_username",
+                    RoleClaimType = ClaimTypes.Role
+                };
+
+                // Save token on successful authentication (useful for diagnostics)
+                options.SaveToken = true;
+
+                // Add events to log failures and support tokens via query string for GraphQL playgrounds
+                options.Events = new JwtBearerEvents
+                {
+                    OnAuthenticationFailed = context =>
+                    {
+                        var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                        logger.LogError(context.Exception, "JWT authentication failed");
+                        return Task.CompletedTask;
+                    },
+                    OnMessageReceived = context =>
+                    {
+                        // Support passing access_token via query string for non-browser GraphQL clients / playgrounds
+                        var accessToken = context.Request.Query["access_token"].FirstOrDefault();
+                        if (!string.IsNullOrEmpty(accessToken) && context.Request.Path.StartsWithSegments("/graphql"))
+                        {
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    },
+                    OnChallenge = context =>
+                    {
+                        var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                        logger.LogWarning("Authentication challenge: {Error} {Description}", context.Error, context.ErrorDescription);
+                        return Task.CompletedTask;
+                    }
+                    ,
+                    OnTokenValidated = context =>
+                    {
+                        try
+                        {
+                            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                            // If no audience configured, accept
+                            if (string.IsNullOrEmpty(audience))
+                                return Task.CompletedTask;
+
+                            var principal = context.Principal;
+                            // Gather aud claims
+                            var audClaims = principal.Claims.Where(c => c.Type == "aud").Select(c => c.Value).ToList();
+
+                            // Check azp claim
+                            var azp = principal.Claims.FirstOrDefault(c => c.Type == "azp")?.Value;
+
+                            bool matched = audClaims.Any(a => string.Equals(a, audience, StringComparison.Ordinal));
+
+                            if (!matched && !string.IsNullOrEmpty(azp) && string.Equals(azp, audience, StringComparison.Ordinal))
+                                matched = true;
+
+                            if (!matched)
+                            {
+                                logger.LogWarning("Token audience/azp does not match expected audience '{Audience}'. aud: {Aud}, azp: {Azp}", audience, audClaims, azp);
+                                context.Fail("Invalid audience");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                            logger.LogError(ex, "Error validating token audience in OnTokenValidated");
+                            context.Fail("Audience validation error");
+                        }
+
+                        return Task.CompletedTask;
+                    }
                 };
             });
 
         builder.Services.AddAuthorization();
+
+        // Add GraphQL Server
+        builder.Services
+            .AddGraphQLServer()
+            .AddQueryType<Query>()
+            .AddMutationType<Mutation>()
+            .AddType<CategoryType>()
+            .AddType<ProductType>()
+            .AddType<PaginatedProductsType>()
+            .AddDataLoader<CategoryBatchDataLoader>()
+            .AddDataLoader<ProductBatchDataLoader>()
+            .AddAuthorization();
+
+        // Add services
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAll", builder =>
+            {
+                builder.AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader();
+            });
+        });
 
         // Add Keycloak claims transformation to map realm_access.roles to standard role claims
         builder.Services.AddScoped<IClaimsTransformation, KeycloakClaimsTransformation>();
@@ -202,6 +320,13 @@ public class Program
         
         var app = builder.Build();
 
+        // Apply database migrations
+        using (var scope = app.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            await dbContext.Database.MigrateAsync();
+        }
+
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
@@ -217,13 +342,21 @@ public class Program
             app.UseHttpsRedirection();
         }
         
-        app.UseCors("AllowLocalhost");
+        app.UseCors("AllowAll");
 
+        // Ensure authentication middleware runs so registered authentication schemes are invoked
         app.UseAuthentication();
         app.UseAuthorization();
 
         app.MapControllers();
 
-        app.Run();
+        // Map GraphQL endpoint and require authentication on the HTTP endpoint so unauthenticated
+        // requests receive a 401/403 before GraphQL execution.
+        app.MapGraphQL();//.RequireAuthorization();
+
+        // Add a simple health check endpoint
+        app.MapGet("/health", () => "GraphQL API is running");
+
+        await app.RunAsync();
     }
 }

@@ -1,3 +1,5 @@
+using System.Net.Mime;
+
 namespace CatalogService.Api.Models;
 
 /// <summary>
@@ -7,4 +9,4 @@ public record LinkDto(
     string Rel,
     string Href,
     string Method,
-    string ContentType = "application/json");
+    string ContentType = MediaTypeNames.Application.Json);

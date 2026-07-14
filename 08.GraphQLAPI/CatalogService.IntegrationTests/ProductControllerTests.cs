@@ -1,8 +1,9 @@
-﻿using AutoFixture;
+using AutoFixture;
 using CatalogService.Api.Controllers;
 using CatalogService.Api.Filters;
 using CatalogService.Api.Interfaces;
 using CatalogService.Api.Models;
+using CatalogService.Application.DTOs;
 using CatalogService.Application.Interfaces;
 using CatalogService.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -87,8 +88,16 @@ public class ProductControllerTests
     {
         // Arrange
         _mockCategoryService.Setup(s => s.GetItemAsync(321, It.IsAny<CancellationToken>())).ReturnsAsync((Category?)null);
-        var productDto = new ProductDto(1, "Test product", "Test product description",
-            new Uri("https://www.example.com/test-product.png"), 777m, 1000, 321);
+        var productDto = new ProductDto
+        {
+            Id = 1,
+            Name = "Test product",
+            Description = "Test product description",
+            Image = new Uri("https://www.example.com/test-product.png"),
+            Price = 777m,
+            Amount = 1000,
+            CategoryId = 321
+        };
 
         // Act
         var actualResult = await _productController.Post(productDto, CancellationToken.None);
@@ -103,8 +112,16 @@ public class ProductControllerTests
     {
         // Arrange
         _mockProductService.Setup(s => s.GetItemAsync(321, It.IsAny<CancellationToken>())).ReturnsAsync((Product?)null);
-        var productDto = new ProductDto(321, "Test product", "Test product description",
-            new Uri("https://www.example.com/test-product.png"), 777m, 1000, 1);
+        var productDto = new ProductDto
+        {
+            Id = 321,
+            Name = "Test product",
+            Description = "Test product description",
+            Image = new Uri("https://www.example.com/test-product.png"),
+            Price = 777m,
+            Amount = 1000,
+            CategoryId = 1
+        };
 
         // Act
         var actualResult = await _productController.Put(321, productDto, CancellationToken.None);

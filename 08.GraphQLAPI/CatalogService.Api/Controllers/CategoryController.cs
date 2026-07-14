@@ -1,4 +1,4 @@
-﻿using CatalogService.Api.Interfaces;
+using CatalogService.Api.Interfaces;
 using CatalogService.Api.Models;
 using CatalogService.Application.Interfaces;
 using CatalogService.Domain.Entities;
@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Mime;
+using CatalogService.Application.DTOs;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -120,13 +121,15 @@ public class CategoryController : ControllerBase
         {
             Category? parentCategory = null;
 
-            if (categoryDto.ParentId != null)
+            int? parentId = null;
+            if (categoryDto.Parent != null)
             {
-                parentCategory = await _categoryService.GetItemAsync(categoryDto.ParentId.Value, cancellationToken);
+                parentId = categoryDto.Parent.Id;
+                parentCategory = await _categoryService.GetItemAsync(parentId.Value, cancellationToken);
 
                 if (parentCategory == null)
                 {
-                    return BadRequest($"Parent category with ID {categoryDto.ParentId.Value} does not exist.");
+                    return BadRequest($"Parent category with ID {parentId.Value} does not exist.");
                 }
             }
 
@@ -134,12 +137,18 @@ public class CategoryController : ControllerBase
             {
                 Name = categoryDto.Name,
                 Image = categoryDto.Image,
-                ParentId = parentCategory?.ParentId
+                ParentId = parentId
             };
 
             await _categoryService.AddItemAsync(category, cancellationToken);
 
-            var createdCategoryDto = new CategoryDto(category.Id, category.Name, category.Image, category.ParentId);
+            var createdCategoryDto = new CategoryDto
+            {
+                Id = category.Id,
+                Name = category.Name,
+                Image = category.Image,
+                Parent = category.ParentId.HasValue ? new CategoryDto { Id = category.ParentId.Value } : null
+            };
             return CreatedAtAction(nameof(Get), new { id = category.Id }, createdCategoryDto);
         }
         catch (Exception ex)
@@ -175,11 +184,17 @@ public class CategoryController : ControllerBase
 
             category.Name = categoryDto.Name;
             category.Image = categoryDto.Image;
-            category.ParentId = categoryDto.ParentId;
+            category.ParentId = categoryDto.Parent?.Id;
 
             await _categoryService.UpdateItemAsync(category, cancellationToken);
 
-            var updatedCategoryDto = new CategoryDto(category.Id, category.Name, category.Image, category.ParentId);
+            var updatedCategoryDto = new CategoryDto
+            {
+                Id = category.Id,
+                Name = category.Name,
+                Image = category.Image,
+                Parent = category.ParentId.HasValue ? new CategoryDto { Id = category.ParentId.Value } : null
+            };
             return Ok(updatedCategoryDto);
         }
         catch (Exception ex)

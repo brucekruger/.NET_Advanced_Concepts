@@ -1,4 +1,4 @@
-﻿using CatalogService.Api.Extensions;
+using CatalogService.Api.Extensions;
 using CatalogService.Api.Filters;
 using CatalogService.Api.Interfaces;
 using CatalogService.Api.Models;
@@ -7,6 +7,7 @@ using CatalogService.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;
+using CatalogService.Application.DTOs;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -159,7 +160,16 @@ public class ProductController : ControllerBase
 
             await _productService.AddItemAsync(product, cancellationToken);
 
-            var createdProductDto = new ProductDto(product.Id, product.Name, product.Description, product.Image, product.Price, product.Amount, product.CategoryId);
+            var createdProductDto = new ProductDto
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Description = product.Description,
+                Image = product.Image,
+                Price = product.Price,
+                Amount = product.Amount,
+                CategoryId = product.CategoryId
+            };
             return CreatedAtAction(nameof(Get), new { id = product.Id }, createdProductDto);
         }
         catch (Exception ex)
@@ -209,7 +219,16 @@ public class ProductController : ControllerBase
 
             await _productService.UpdateItemAsync(product, cancellationToken);
 
-            var updatedProductDto = new ProductDto(product.Id, product.Name, product.Description, product.Image, product.Price, product.Amount, product.CategoryId);
+            var updatedProductDto = new ProductDto
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Description = product.Description,
+                Image = product.Image,
+                Price = product.Price,
+                Amount = product.Amount,
+                CategoryId = product.CategoryId
+            };
             return Ok(updatedProductDto);
         }
         catch (Exception ex)

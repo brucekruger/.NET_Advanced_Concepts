@@ -1,7 +1,8 @@
-﻿using AutoFixture;
+using AutoFixture;
 using CatalogService.Api.Controllers;
 using CatalogService.Api.Interfaces;
 using CatalogService.Api.Models;
+using CatalogService.Application.DTOs;
 using CatalogService.Application.Interfaces;
 using CatalogService.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -85,7 +86,14 @@ public class CategoryControllerTests
         // Arrange
         _mockCategoryService.Setup(s => s.GetItemAsync(123, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Category?)null);
-        var categoryDto = new CategoryDto(1, "TestCategory", new Uri("https://www.example.com/test-category.png"), 123);
+
+        var categoryDto = new CategoryDto
+        {
+            Id = 123,
+            Name = "TestCategory",
+            Image = new Uri("https://www.example.com/test-category.png"),
+            Parent = new CategoryDto { Id = 2 }
+        };
 
         // Act
         var actualResult = await _categoryController.Post(categoryDto, CancellationToken.None);
@@ -101,7 +109,13 @@ public class CategoryControllerTests
         // Arrange
         _mockCategoryService.Setup(s => s.GetItemAsync(123, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Category?)null);
-        var categoryDto = new CategoryDto(123, "TestCategory", new Uri("https://www.example.com/test-category.png"), 2);
+        var categoryDto = new CategoryDto
+        {
+            Id = 123,
+            Name = "TestCategory",
+            Image = new Uri("https://www.example.com/test-category.png"),
+            Parent = new CategoryDto { Id = 2 }
+        };
 
         // Act
         var actualResult = await _categoryController.Put(123, categoryDto, CancellationToken.None);

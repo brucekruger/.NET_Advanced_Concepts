@@ -9,10 +9,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0" />
+    <PackageReference Include="HotChocolate.AspNetCore" Version="16.5.0" />
+    <PackageReference Include="HotChocolate.AspNetCore.Authorization" Version="16.5.0" />
+    <PackageReference Include="HotChocolate.Data.EntityFramework" Version="16.5.0" />
+    <PackageReference Include="HotChocolate.Types" Version="16.5.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.12" />
+    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="9.0.17" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" Version="5.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.12" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.12" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0" />
   </ItemGroup>

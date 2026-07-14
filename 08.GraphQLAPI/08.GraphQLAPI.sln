@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.37314.3 d17.14
+VisualStudioVersion = 17.14.37314.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CatalogService.UnitTests", "CatalogService.UnitTests\CatalogService.UnitTests.csproj", "{858EEB35-1668-81E0-60FB-BACA7713A632}"
 EndProject
@@ -20,6 +20,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CartService.Tests", "CartService.Tests\CartService.Tests.csproj", "{B5A8DB97-E100-5E73-9328-07A74DDC611A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CartService.Api", "CartService.Api\CartService.Api.csproj", "{CA51E806-BABE-9D22-0DC3-A18E251F977C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		docker-compose.yml = docker-compose.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

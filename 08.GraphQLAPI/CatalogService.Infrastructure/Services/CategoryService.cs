@@ -1,10 +1,11 @@
 using CatalogService.Application.Interfaces;
+using CatalogService.Application.DTOs;
 using CatalogService.Domain.Entities;
 using CatalogService.Infrastructure.Data.Extensions;
 
 namespace CatalogService.Infrastructure.Services;
 
-public class CategoryService : ICatalogService<Category>
+public partial class CategoryService : ICatalogService<Category>
 {
     private readonly IRepository<Category> _categoryRepository;
 
@@ -80,5 +81,29 @@ public class CategoryService : ICatalogService<Category>
         }
 
         return await _categoryRepository.DeleteItemAsync(itemId, cancellationToken);
+    }
+
+    public async Task<CategoryDto?> GetAsDtoAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var category = await GetItemAsync(id, cancellationToken);
+        if (category is null)
+        {
+            return null;
+        }
+
+        return new CategoryDto
+        {
+            Id = category.Id,
+            Name = category.Name,
+            Image = category.Image,
+            Parent = category.Parent is not null
+                ? new CategoryDto
+                {
+                    Id = category.Parent.Id,
+                    Name = category.Parent.Name,
+                    Image = category.Parent.Image
+                }
+                : null
+        };
     }
 }

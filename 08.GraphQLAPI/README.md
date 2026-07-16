@@ -328,6 +328,67 @@ To view token details:
 
 ---
 
+## 🚀 GraphQL Usage
+
+Endpoint: `/graphql`
+
+Authentication
+- The GraphQL endpoint requires a Bearer JWT on protected operations. Include the header:
+  - `Authorization: Bearer <ACCESS_TOKEN>`
+- Tokens from Keycloak must contain role claims mapped to `Admin` for admin-only mutations.
+
+Using the UI
+- Use Banana Cake Pop, Altair, GraphiQL or the built-in HotChocolate playground to explore and run queries.
+- In the UI set the HTTP header `Authorization: Bearer <TOKEN>` in the headers panel before executing requests.
+
+Examples
+
+- Query: list categories
+
+```json
+{ "query": "{ categories { id name image parentId } }" }
+```
+
+- Query: paginated products
+
+```json
+{ "query": "{ products(categoryId: 1, pageNumber: 1, pageSize: 10) { items { id name price } totalCount } }" }
+```
+
+- Mutation: create category (Admin role required)
+
+```json
+{
+  "query": "mutation { createCategory(input: { name: \"New Category\", image: \"/img.png\" }) { id name } }"
+}
+```
+
+curl examples
+
+- Query categories (replace `<TOKEN>`)
+
+```bash
+curl -X POST https://localhost:5001/graphql \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{ "query": "{ categories { id name } }" }'
+```
+
+- Create category (Admin)
+
+```bash
+curl -X POST https://localhost:5001/graphql \
+  -H "Authorization: Bearer <ADMIN_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{ "query": "mutation { createCategory(input: { name: \"Admin Cat\" }) { id name } }" }'
+```
+
+Notes
+- The GraphQL schema uses HotChocolate's `.AddAuthorization()` and the codebase decorates types/members with `[Authorize]` and `[Authorize(Roles = "Admin")]`. Unauthenticated requests return HTTP `401`; authenticated requests without the required role return `403` for protected operations.
+- If role claims from Keycloak are not recognized by the app, ensure the `KeycloakClaimsTransformation` maps `realm_access.roles` or `resource_access` into `ClaimTypes.Role` (see `Program.cs`).
+
+---
+
 ## 🛠️ Code Quality & Style Setup
 
 This project enforces consistent code style and quality standards across all team members using industry-leading tools.

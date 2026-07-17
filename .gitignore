@@ -66,3 +66,6 @@ nunit-*.xml
 08.GraphQLAPI/.sonarqube/
 08.GraphQLAPI/.vs/08.GraphQLAPI/CopilotIndices/
 08.GraphQLAPI/.vs/
+09.CI-CD/.github/
+09.CI-CD/.vs/
+09.CI-CD/keycloak/

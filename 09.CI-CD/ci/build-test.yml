@@ -1,0 +1,32 @@
+# CI Jobs - Build and Test for Merge Requests
+# Included from: .gitlab-ci.yml
+
+.build_template: &build_template
+  stage: build
+  image: $DOTNET_SDK_IMAGE
+  only:
+    - merge_requests
+  cache:
+    key: build-$CI_COMMIT_REF_SLUG
+    paths:
+      - .nuget/
+  script:
+    - echo "Restoring and building solution..."
+    - dotnet restore 09.CI-CD.sln
+    - dotnet build 09.CI-CD.sln -c Release --no-restore
+
+.test_template: &test_template
+  stage: test
+  image: $DOTNET_SDK_IMAGE
+  only:
+    - merge_requests
+  cache:
+    key: build-$CI_COMMIT_REF_SLUG
+    paths:
+      - .nuget/
+  artifacts:
+    reports:
+      junit: test-results/**/*-test-results.xml
+    paths:
+      - test-results/
+    expire_in: 1 week

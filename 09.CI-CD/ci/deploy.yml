@@ -1,0 +1,14 @@
+# CD Jobs - Deploy stages for master branch
+# Included from: .gitlab-ci.yml
+
+.deploy_template: &deploy_template
+  stage: deploy
+  only:
+    - master
+  when: manual
+
+.docker_build_template: &docker_build_template
+  stage: package
+  image: docker:latest
+  only:
+    - master

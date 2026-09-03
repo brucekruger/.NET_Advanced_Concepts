@@ -69,3 +69,4 @@ nunit-*.xml
 09.CI-CD/.github/
 09.CI-CD/.vs/
 09.CI-CD/keycloak/
+.vs/

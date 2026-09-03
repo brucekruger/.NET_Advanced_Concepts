@@ -1,0 +1,53 @@
+# Terraform
+infra/.terraform/
+infra/.terraform.lock.hcl
+infra/terraform.tfstate
+infra/terraform.tfstate.backup
+infra/tfplan
+infra/*.tfvars
+!infra/terraform.tfvars.example
+
+# Build artifacts
+bin/
+obj/
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+
+# Visual Studio
+.vs/
+.vscode/
+*.user
+*.suo
+*.sln.iml
+.idea/
+
+# Dependencies
+packages/
+.nuget/
+
+# Test results
+test-results/
+TestResults/
+*.trx
+
+# Docker
+docker-compose.override.yml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Environment files
+.env
+.env.local
+*.pem
+*.key

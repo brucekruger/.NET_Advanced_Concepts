@@ -1,0 +1,11 @@
+# Terraform Variables Example
+# Copy to terraform.tfvars and fill in your values
+# Note: terraform.tfvars is git-ignored for security
+
+docker_host           = "unix:///var/run/docker.sock"
+catalog_service_port  = 5001
+cart_service_port     = 5002
+sql_server_port       = 1433
+redis_port            = 6379
+environment           = "development"
+sql_password          = "YourStrongPassword123!"

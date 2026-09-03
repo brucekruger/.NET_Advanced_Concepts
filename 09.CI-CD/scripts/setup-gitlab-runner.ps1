@@ -28,10 +28,10 @@ Write-Host "    gitlab-runner register" -ForegroundColor Yellow
 Write-Host "      --url https://gitlab.com/" -ForegroundColor Yellow
 Write-Host "      --registration-token <TOKEN>" -ForegroundColor Yellow
 Write-Host "      --executor docker" -ForegroundColor Yellow
-Write-Host "      --docker-image mcr.microsoft.com/dotnet/sdk:9.0" -ForegroundColor Yellow
+Write-Host "      --docker-image mcr.microsoft.com/dotnet/sdk:10.0" -ForegroundColor Yellow
 Write-Host "      --docker-volumes /var/run/docker.sock:/var/run/docker.sock" -ForegroundColor Yellow
 Write-Host "      --description 'Docker Runner for 09.CI-CD'" -ForegroundColor Yellow
-Write-Host "      --tag-list 'docker,dotnet9'" -ForegroundColor Yellow
+Write-Host "      --tag-list 'docker,dotnet10'" -ForegroundColor Yellow
 Write-Host "      --run-untagged" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "4. Verify the runner is registered:"

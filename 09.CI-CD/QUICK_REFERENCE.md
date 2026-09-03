@@ -108,7 +108,7 @@ gitlab-runner --debug run
 gitlab-runner exec docker build:catalog
 
 # Test with custom image
-gitlab-runner exec docker --docker-image mcr.microsoft.com/dotnet/sdk:9.0 build:catalog
+gitlab-runner exec docker --docker-image mcr.microsoft.com/dotnet/sdk:10.0 build:catalog
 
 # List available jobs (simulate)
 grep "^[a-z].*:$" .gitlab-ci.yml
@@ -375,7 +375,7 @@ CI/CD Docs:                https://docs.gitlab.com/ee/ci/
 Runner Docs:               https://docs.gitlab.com/runner/
 Terraform Docs:            https://registry.terraform.io/
 Docker Compose Docs:       https://docs.docker.com/compose/
-.NET 9 Docs:               https://learn.microsoft.com/en-us/dotnet/
+.NET 10 Docs:               https://learn.microsoft.com/en-us/dotnet/
 ```
 
 ## Time Savers
@@ -471,4 +471,4 @@ docker-compose up -d
 
 ---
 
-**Quick Ref v1.0** | .NET 9 | GitLab CI/CD | Last Updated: 2026-09-03
+**Quick Ref v1.0** | .NET 10 | GitLab CI/CD | Last Updated: 2026-09-03

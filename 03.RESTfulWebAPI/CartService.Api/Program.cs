@@ -2,7 +2,7 @@ using System.Reflection;
 using CartService.Application.Interfaces;
 using CartService.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
 namespace CartService.Api;

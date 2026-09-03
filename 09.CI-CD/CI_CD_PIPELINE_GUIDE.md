@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project implements a **GitLab CI/CD pipeline** following **GitLab Flow** (simplified) for the 09.CI-CD microservices project. The pipeline automates building, testing, packaging, and deploying the **CatalogService.Api** and **CartService.Api** services targeting **.NET 9**.
+This project implements a **GitLab CI/CD pipeline** following **GitLab Flow** (simplified) for the 09.CI-CD microservices project. The pipeline automates building, testing, packaging, and deploying the **CatalogService.Api** and **CartService.Api** services targeting **.NET 10**.
 
 ---
 
@@ -22,7 +22,7 @@ This project implements a **GitLab CI/CD pipeline** following **GitLab Flow** (s
    gitlab-runner install
    gitlab-runner register
    # Choose executor: docker
-   # Docker image: docker:latest (or mcr.microsoft.com/dotnet/sdk:9.0)
+   # Docker image: docker:latest (or mcr.microsoft.com/dotnet/sdk:10.0)
    ```
 
 3. **Protected Branch**: Mark `master` as protected in GitLab
@@ -145,8 +145,8 @@ Key variables available in the pipeline:
 | `$CI_COMMIT_SHA` | Git commit hash | Unique build identifier |
 | `$CI_COMMIT_REF_SLUG` | Branch name (slugified) | Cache key, image tag |
 | `$CI_REGISTRY_IMAGE` | GitLab Registry image path | Docker image repository |
-| `$DOTNET_SDK_IMAGE` | `mcr.microsoft.com/dotnet/sdk:9.0` | Build/test base image |
-| `$DOTNET_RUNTIME_IMAGE` | `mcr.microsoft.com/dotnet/aspnet:9.0` | Runtime base image |
+| `$DOTNET_SDK_IMAGE` | `mcr.microsoft.com/dotnet/sdk:10.0` | Build/test base image |
+| `$DOTNET_RUNTIME_IMAGE` | `mcr.microsoft.com/dotnet/aspnet:10.0` | Runtime base image |
 | `$MSSQL_IMAGE`, `$REDIS_IMAGE`, etc. | Service images | docker-compose |
 
 ---
@@ -318,6 +318,6 @@ For questions or issues:
 ---
 
 **Last Updated**: 2026-09-03  
-**Target Framework**: .NET 9  
+**Target Framework**: .NET 10  
 **Platform**: GitLab CI/CD  
 **Status**: Initial Implementation

@@ -5,7 +5,7 @@ Use this checklist to track your progress through the CI/CD implementation and d
 ## Phase 0: Prerequisites & Setup
 
 - [ ] Read `IMPLEMENTATION_PLAN.md` to understand the project goals
-- [ ] Verify .NET 9 SDK installed: `dotnet --version`
+- [ ] Verify .NET 10 SDK installed: `dotnet --version`
 - [ ] Verify Docker installed: `docker --version`
 - [ ] Have GitLab account access (gitlab.com or private instance)
 - [ ] Have access to register GitLab Runner
@@ -318,4 +318,4 @@ docker-compose down -v
 
 **Status**: Implementation Checklist  
 **Last Updated**: 2026-09-03  
-**Target Framework**: .NET 9  
+**Target Framework**: .NET 10  

@@ -1,6 +1,6 @@
 # Multi-stage build for Cart Service
 # Stage 1: Build stage - compiles the .NET application using the full SDK
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy project files first for dependency restoration
@@ -24,7 +24,7 @@ WORKDIR /src
 RUN dotnet publish "CartService.Api/CartService.Api.csproj" -c Release -o /app/publish
 
 # Stage 3: Runtime stage - final lightweight image for running the application
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 
 # Install curl so the docker-compose healthcheck can probe /health

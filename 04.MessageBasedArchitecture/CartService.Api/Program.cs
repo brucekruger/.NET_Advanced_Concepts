@@ -5,7 +5,7 @@ using CartService.Infrastructure.Messaging;
 using CartService.Infrastructure.Messaging.Configuration;
 using CartService.Infrastructure.Messaging.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using RabbitMQ.Client;
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 

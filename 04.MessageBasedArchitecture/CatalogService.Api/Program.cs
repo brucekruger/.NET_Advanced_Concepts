@@ -6,7 +6,7 @@ using CatalogService.Infrastructure.Data;
 using CatalogService.Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using System.Reflection;
 using CatalogService.Infrastructure.Messaging;
 using CatalogService.Infrastructure.Messaging.Configuration;

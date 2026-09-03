@@ -51,7 +51,7 @@ Project: CartService Redis Caching Implementation
 
 ✅ Docker Image Build (cart-service)
    - Image: 07containerization-cart-service:latest
-   - Base: mcr.microsoft.com/dotnet/aspnet:9.0
+   - Base: mcr.microsoft.com/dotnet/aspnet:10.0
    - Build time: 161.4 seconds
    - Status: SUCCESS
    - Warning: Only XML documentation warnings (expected)

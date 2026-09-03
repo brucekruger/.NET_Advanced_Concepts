@@ -1,15 +1,15 @@
-# GitLab CI/CD Pipeline for .NET 9 Microservices
+# GitLab CI/CD Pipeline for .NET 10 Microservices
 # Project: 09.CI-CD (Catalog & Cart Services)
-# Platform: .NET 9, Docker, Docker Compose, Terraform
+# Platform: .NET 10, Docker, Docker Compose, Terraform
 # Branching: GitLab Flow (feature/* → master via MR)
 
 variables:
   DOCKER_DRIVER: overlay2
   DOCKER_BUILDKIT: 1
   # .NET SDK image for build & test
-  DOTNET_SDK_IMAGE: mcr.microsoft.com/dotnet/sdk:9.0
+  DOTNET_SDK_IMAGE: mcr.microsoft.com/dotnet/sdk:10.0
   # .NET runtime image for final containers
-  DOTNET_RUNTIME_IMAGE: mcr.microsoft.com/dotnet/aspnet:9.0
+  DOTNET_RUNTIME_IMAGE: mcr.microsoft.com/dotnet/aspnet:10.0
   # Service images
   MSSQL_IMAGE: mcr.microsoft.com/mssql/server:2022-latest
   REDIS_IMAGE: redis:7-alpine

@@ -2,7 +2,7 @@
 
 ## 🎯 Overview
 
-This package contains a **complete, production-ready GitLab CI/CD pipeline** implementation for the **09.CI-CD** microservices project (.NET 9). It follows **GitLab Flow** branching strategy and implements both **Home Task 1 (CI)** and **Home Task 2 (CD + IaC)** requirements.
+This package contains a **complete, production-ready GitLab CI/CD pipeline** implementation for the **09.CI-CD** microservices project (.NET 10). It follows **GitLab Flow** branching strategy and implements both **Home Task 1 (CI)** and **Home Task 2 (CD + IaC)** requirements.
 
 **Target Services:**
 - CatalogService.Api
@@ -58,7 +58,7 @@ This package contains a **complete, production-ready GitLab CI/CD pipeline** imp
 
 ### Prerequisites
 - Git
-- .NET 9 SDK
+- .NET 10 SDK
 - Docker
 - GitLab account (gitlab.com or private)
 
@@ -326,7 +326,7 @@ For more commands, see **QUICK_REFERENCE.md**.
    ```
    Status: Online (green circle)
    Executor: Docker
-   Tags: docker,dotnet9
+   Tags: docker,dotnet10
    ```
 
 ### Local Configuration
@@ -431,7 +431,7 @@ See **CI_CD_IMPLEMENTATION_CHECKLIST.md** for detailed verification.
 - 🏃 [GitLab Runner Docs](https://docs.gitlab.com/runner/)
 - 🐳 [Docker Docs](https://docs.docker.com/)
 - 🏗️ [Terraform Docs](https://www.terraform.io/docs/)
-- 🔷 [.NET 9 Docs](https://learn.microsoft.com/en-us/dotnet/core/)
+- 🔷 [.NET 10 Docs](https://learn.microsoft.com/en-us/dotnet/core/)
 
 ---
 
@@ -603,7 +603,7 @@ All following **GitLab Flow** branching strategy for team collaboration.
 ---
 
 **Implementation Complete** ✅  
-**Framework**: .NET 9  
+**Framework**: .NET 10  
 **Platform**: GitLab CI/CD  
 **Strategy**: GitLab Flow  
 **Date**: 2026-09-03  

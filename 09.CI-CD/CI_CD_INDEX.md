@@ -370,7 +370,7 @@ See [CI_CD_IMPLEMENTATION_CHECKLIST.md](CI_CD_IMPLEMENTATION_CHECKLIST.md) for d
 |---------|------|---------|
 | 1.0 | 2026-09-03 | Initial implementation |
 
-**Target Framework**: .NET 9  
+**Target Framework**: .NET 10  
 **Platform**: GitLab CI/CD  
 **Strategy**: GitLab Flow  
 

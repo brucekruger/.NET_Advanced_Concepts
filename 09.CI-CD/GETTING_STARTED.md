@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide walks you through deploying the 09.CI-CD project with **GitLab CI/CD** following **GitLab Flow** branching strategy. The pipeline automates CI (build/test) and CD (package/deploy) for CatalogService.Api and CartService.Api targeting **.NET 9**.
+This guide walks you through deploying the 09.CI-CD project with **GitLab CI/CD** following **GitLab Flow** branching strategy. The pipeline automates CI (build/test) and CD (package/deploy) for CatalogService.Api and CartService.Api targeting **.NET 10**.
 
 ---
 
@@ -24,7 +24,7 @@ This guide walks you through deploying the 09.CI-CD project with **GitLab CI/CD*
 - **GitLab account**: Access to gitlab.com or private GitLab instance
 - **Docker** installed (for local testing and runner)
 - **GitLab Runner** (will be installed in Step 2)
-- **.NET 9 SDK** (for local builds)
+- **.NET 10 SDK** (for local builds)
 
 ---
 
@@ -114,7 +114,7 @@ gitlab-runner register \
   --docker-image docker:latest \
   --docker-volumes /var/run/docker.sock:/var/run/docker.sock \
   --description "Docker Runner for 09.CI-CD" \
-  --tag-list "docker,dotnet9" \
+  --tag-list "docker,dotnet10" \
   --run-untagged
 ```
 
@@ -303,11 +303,11 @@ To provision infrastructure with Terraform:
 
 ### Docker Image Pull Fails
 
-**Symptom:** `Error: pull access denied for mcr.microsoft.com/dotnet/sdk:9.0`
+**Symptom:** `Error: pull access denied for mcr.microsoft.com/dotnet/sdk:10.0`
 
 **Solution:**
 1. Check network connectivity on runner machine
-2. Verify Docker can pull images: `docker pull mcr.microsoft.com/dotnet/sdk:9.0`
+2. Verify Docker can pull images: `docker pull mcr.microsoft.com/dotnet/sdk:10.0`
 3. If behind proxy, configure Docker daemon
 
 ### Test Failures
@@ -364,6 +364,6 @@ For issues:
 ---
 
 **Status**: Ready for deployment  
-**Framework**: .NET 9  
+**Framework**: .NET 10  
 **Platform**: GitLab CI/CD  
 **Branch Strategy**: GitLab Flow  

@@ -137,7 +137,7 @@ docker compose down -v            # stop + remove volumes
 
 - **Docker** installed on your machine
 - **Docker Compose** (usually included with Docker Desktop)
-- **.NET 9 SDK** (for running the applications)
+- **.NET 10 SDK** (for running the applications)
 - **Postman** (for testing API endpoints with authentication)
 
 ## Running Services with Docker Compose
@@ -731,7 +731,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: 10.0.x
 
       - name: Restore
         run: dotnet restore

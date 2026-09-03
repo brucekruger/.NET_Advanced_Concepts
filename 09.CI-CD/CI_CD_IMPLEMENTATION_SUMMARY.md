@@ -2,7 +2,7 @@
 
 ## Overview
 
-Complete GitLab CI/CD implementation for the **09.CI-CD** project following the **IMPLEMENTATION_PLAN.md** specifications. This includes pipelines for build, test, package, infrastructure provisioning, and deployment stages targeting **.NET 9**.
+Complete GitLab CI/CD implementation for the **09.CI-CD** project following the **IMPLEMENTATION_PLAN.md** specifications. This includes pipelines for build, test, package, infrastructure provisioning, and deployment stages targeting **.NET 10**.
 
 ---
 
@@ -264,7 +264,7 @@ bash scripts/validate-ci.sh
 
 | Component | Technology | Version |
 |-----------|-----------|---------|
-| Language | C# / .NET | 9.0 |
+| Language | C# / .NET | 10.0 |
 | CI/CD Platform | GitLab | Minimum 13.0 |
 | Pipeline Format | YAML (GitLab CI) | 1.0 |
 | Branching | Git | 2.0+ |
@@ -378,7 +378,7 @@ For detailed troubleshooting, see:
 
 ## Summary
 
-This implementation provides a **production-ready CI/CD pipeline** for .NET 9 microservices on GitLab. The pipeline automates:
+This implementation provides a **production-ready CI/CD pipeline** for .NET 10 microservices on GitLab. The pipeline automates:
 
 - **Build**: Conditional compilation based on changed files
 - **Test**: Unit + integration tests with XML reporting
@@ -397,6 +397,6 @@ All configuration is **version controlled**, **reproducible**, and **well docume
 ---
 
 **Status**: ✅ Complete and Ready for Deployment  
-**Framework**: .NET 9  
+**Framework**: .NET 10  
 **Platform**: GitLab CI/CD  
 **Date**: 2026-09-03  

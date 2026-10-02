@@ -70,3 +70,5 @@ nunit-*.xml
 09.CI-CD/.vs/
 09.CI-CD/keycloak/
 .vs/
+05.Security/.github/
+02.LayeredArchitectures/.github/
